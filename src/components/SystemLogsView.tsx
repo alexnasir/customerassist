@@ -54,7 +54,7 @@ const getLogDetails = (log: AuditLog) => {
         method: 'POST',
         url: '/api/chat',
         headers: {
-          'host': 'omniassist.ai',
+          'host': 'DukaLetuAssist.com',
           'user-agent': 'Mozilla/5.0 (Scrapy-Bot; +http://scrapy.org)',
           'content-type': 'application/json',
           'x-forwarded-for': log.ipAddress
@@ -85,7 +85,7 @@ const getLogDetails = (log: AuditLog) => {
         method: 'GET',
         url: '/api/prompts',
         headers: {
-          'host': 'omniassist.ai',
+          'host': 'DukaLetuAssist.com',
           'authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.invalid.signature',
           'x-real-ip': log.ipAddress
         }

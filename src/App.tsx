@@ -22,9 +22,9 @@ export default function App() {
 
   // Quick Account Select for Reviewers
   const demoAccounts = [
-    { label: 'Admin Panel', email: 'admin@omniassist.ai', pass: 'admin123', color: 'bg-cyan-500/10 border-cyan-800/20 text-cyan-400' },
-    { label: 'Support Agent', email: 'agent@omniassist.ai', pass: 'agent123', color: 'bg-purple-500/10 border-purple-800/20 text-purple-400' },
-    { label: 'Customer Portal', email: 'customer@omniassist.ai', pass: 'customer123', color: 'bg-emerald-500/10 border-emerald-800/20 text-emerald-400' }
+    { label: 'Admin Panel', email: 'admin@DukaLetuAssist.com', pass: 'admin123', color: 'bg-cyan-500/10 border-cyan-800/20 text-cyan-400' },
+    { label: 'Support Agent', email: 'agent@DukaLetuAssist.com', pass: 'agent123', color: 'bg-purple-500/10 border-purple-800/20 text-purple-400' },
+    { label: 'Customer Portal', email: 'customer@DukaLetuAssist.com', pass: 'customer123', color: 'bg-emerald-500/10 border-emerald-800/20 text-emerald-400' }
   ];
 
   const handleLogin = async (e?: React.FormEvent, customEmail?: string, customPass?: string) => {
@@ -86,8 +86,8 @@ export default function App() {
             <div className="inline-flex bg-gradient-to-tr from-cyan-500 to-indigo-500 p-3 rounded-2xl text-white shadow-xl shadow-cyan-500/10 mb-4 animate-pulse">
               <Sparkles className="w-6 h-6" />
             </div>
-            <h1 className="text-2xl font-black text-white tracking-tight">OmniAssist AI</h1>
-            <p className="text-xs text-gray-400 mt-1.5 max-w-xs mx-auto">Multilingual Voice & Chat Support powered by Gemini AI</p>
+            <h1 className="text-2xl font-black text-white tracking-tight">Duka Letu Assist</h1>
+            <p className="text-xs text-gray-400 mt-1.5 max-w-xs mx-auto">Multilingual Voice & Chat Support</p>
           </div>
 
           {authError && (
@@ -106,7 +106,7 @@ export default function App() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@omniassist.ai"
+                  placeholder="name@DukaLetuAssist.com"
                   className="w-full bg-[#070913] border border-[#1E293B] hover:border-[#334155] focus:border-cyan-400 rounded-xl pl-11 pr-4 py-3.5 text-sm text-white outline-none transition-all duration-150"
                 />
               </div>

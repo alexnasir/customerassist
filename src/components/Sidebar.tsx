@@ -39,10 +39,10 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
       {/* Brand Logo */}
       <div className="p-6 border-b border-[#1E293B] flex items-center gap-3">
         <div className="bg-gradient-to-tr from-cyan-500 to-indigo-500 p-2 rounded-xl text-white shadow-lg shadow-cyan-500/10">
-          <Sparkles className="w-5 h-5 animate-pulse" />
+          // <Sparkles className="w-5 h-5 animate-pulse" />
         </div>
         <div>
-          <h1 className="font-bold text-white text-lg tracking-tight leading-none">OmniAssist AI</h1>
+          <h1 className="font-bold text-white text-lg tracking-tight leading-none">Duka Letu Assist</h1>
           <span className="text-[10px] text-cyan-400 font-medium tracking-widest uppercase">Support SaaS</span>
         </div>
       </div>
