@@ -1,0 +1,245 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Global Helper Functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isBootstrappedAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == "alexnasiali45@gmail.com" &&
+        request.auth.token.email_verified == true
+      );
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isBootstrappedAdmin() || (
+        isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        getUserData().role == "admin"
+      );
+    }
+
+    function isAgent() {
+      return isBootstrappedAdmin() || (
+        isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        (getUserData().role == "agent" || getUserData().role == "admin")
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches("^[a-zA-Z0-9_\\-]+$");
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // 3. Entity Specific Validators
+    function isValidUser(data) {
+      return data.keys().hasAll(["id", "name", "email", "role", "createdAt"]) &&
+             data.keys().size() == 5 &&
+             data.id == request.auth.uid &&
+             data.name is string && data.name.size() <= 200 &&
+             data.email is string && data.email.size() <= 200 &&
+             data.role in ["admin", "agent", "customer"] &&
+             data.createdAt is string && data.createdAt.size() <= 100;
+    }
+
+    function isValidConversation(data) {
+      return data.keys().hasAll(["id", "customerId", "customerName", "language", "status", "createdAt", "lastMessageAt"]) &&
+             data.keys().size() >= 7 &&
+             data.id is string && data.id.size() <= 128 &&
+             data.customerId is string && data.customerId.size() <= 128 &&
+             data.customerName is string && data.customerName.size() <= 200 &&
+             data.language in ["en", "sw", "auto"] &&
+             data.status in ["active", "escalated", "resolved"] &&
+             data.createdAt is string && data.createdAt.size() <= 100 &&
+             data.lastMessageAt is string && data.lastMessageAt.size() <= 100;
+    }
+
+    function isValidMessage(data) {
+      return data.keys().hasAll(["id", "conversationId", "sender", "senderName", "content", "type", "timestamp"]) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.conversationId is string && data.conversationId.size() <= 128 &&
+             data.sender in ["user", "ai", "agent"] &&
+             data.senderName is string && data.senderName.size() <= 200 &&
+             data.content is string && data.content.size() <= 50000 &&
+             data.type in ["text", "voice"] &&
+             data.timestamp is string && data.timestamp.size() <= 100;
+    }
+
+    function isValidTicket(data) {
+      return data.keys().hasAll(["id", "conversationId", "customerName", "email", "category", "priority", "status", "description", "createdAt"]) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.conversationId is string && data.conversationId.size() <= 128 &&
+             data.customerName is string && data.customerName.size() <= 200 &&
+             data.email is string && data.email.size() <= 200 &&
+             data.category is string && data.category.size() <= 100 &&
+             data.priority in ["low", "medium", "high"] &&
+             data.status in ["open", "pending", "resolved"] &&
+             data.description is string && data.description.size() <= 50000 &&
+             data.createdAt is string && data.createdAt.size() <= 100;
+    }
+
+    function isValidPrompt(data) {
+      return data.keys().hasAll(["id", "name", "version", "content", "language", "isActive", "evaluationScore", "costPer1kTokens", "resolutionRate", "latencyMs", "createdAt"]) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.name is string && data.name.size() <= 200 &&
+             data.version is int &&
+             data.content is string && data.content.size() <= 100000 &&
+             data.language in ["en", "sw", "multilingual"] &&
+             data.isActive is bool &&
+             (data.evaluationScore is int || data.evaluationScore is float) &&
+             (data.costPer1kTokens is int || data.costPer1kTokens is float) &&
+             (data.resolutionRate is int || data.resolutionRate is float) &&
+             (data.latencyMs is int || data.latencyMs is float) &&
+             data.createdAt is string && data.createdAt.size() <= 100;
+    }
+
+    function isValidTest(data) {
+      return data.keys().hasAll(["id", "name", "promptAId", "promptBId", "status", "startDate", "createdAt"]) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.name is string && data.name.size() <= 200 &&
+             data.promptAId is string && data.promptAId.size() <= 128 &&
+             data.promptBId is string && data.promptBId.size() <= 128 &&
+             data.status in ["running", "completed"] &&
+             data.startDate is string && data.startDate.size() <= 100 &&
+             data.createdAt is string && data.createdAt.size() <= 100;
+    }
+
+    function isValidDoc(data) {
+      return data.keys().hasAll(["id", "name", "content", "category", "chunkCount", "createdAt"]) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.name is string && data.name.size() <= 200 &&
+             data.content is string && data.content.size() <= 200000 &&
+             data.category is string && data.category.size() <= 100 &&
+             data.chunkCount is int &&
+             data.createdAt is string && data.createdAt.size() <= 100;
+    }
+
+    function isValidLog(data) {
+      return data.keys().hasAll(["id", "timestamp", "action", "actor", "role", "ipAddress", "details", "severity", "status"]) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.timestamp is string && data.timestamp.size() <= 100 &&
+             data.action is string && data.action.size() <= 200 &&
+             data.actor is string && data.actor.size() <= 200 &&
+             data.role is string && data.role.size() <= 50 &&
+             data.ipAddress is string && data.ipAddress.size() <= 50 &&
+             data.details is string && data.details.size() <= 50000 &&
+             data.severity in ["info", "warning", "critical"] &&
+             data.status in ["success", "failure"];
+    }
+
+    // 4. Collection Security Match Rules
+
+    // Users Collection
+    match /users/{userId} {
+      allow read: if isEmailVerified();
+      // Allow creation of own profile with customer role as bootstrap
+      allow create: if isEmailVerified() && isValidUser(incoming()) && (incoming().role == "customer" || isBootstrappedAdmin());
+      // Only admins can change roles. Users can update their name but not privilege roles.
+      allow update: if isEmailVerified() && isValidUser(incoming()) && (
+        isAdmin() || (
+          request.auth.uid == userId &&
+          incoming().role == existing().role
+        )
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Conversations Collection
+    match /conversations/{conversationId} {
+      allow read: if isEmailVerified() && (
+        isAgent() ||
+        resource.data.customerId == request.auth.uid
+      );
+      allow create: if isEmailVerified() && isValidConversation(incoming()) && (
+        isAgent() ||
+        incoming().customerId == request.auth.uid
+      );
+      allow update: if isEmailVerified() && isValidConversation(incoming()) && (
+        isAgent() || (
+          existing().customerId == request.auth.uid &&
+          incoming().customerId == existing().customerId &&
+          // Customers can only update feedback or rating or status (resolving)
+          incoming().diff(existing()).affectedKeys().hasOnly(["rating", "feedback", "status", "lastMessageAt"])
+        )
+      );
+      allow delete: if isAdmin();
+
+      // Messages Subcollection (Master Gate)
+      match /messages/{messageId} {
+        allow read: if isEmailVerified() && (
+          isAgent() ||
+          get(/databases/$(database)/documents/conversations/$(conversationId)).data.customerId == request.auth.uid
+        );
+        allow create: if isEmailVerified() && isValidMessage(incoming()) && (
+          isAgent() || (
+            get(/databases/$(database)/documents/conversations/$(conversationId)).data.customerId == request.auth.uid &&
+            incoming().sender == "user"
+          )
+        );
+        allow update: if isAgent(); // Messages are normally immutable, agents may flag/audit
+        allow delete: if isAdmin();
+      }
+    }
+
+    // Support Tickets Collection
+    match /tickets/{ticketId} {
+      allow read: if isEmailVerified() && (isAgent() || resource.data.email == request.auth.token.email);
+      allow create: if isEmailVerified() && isValidTicket(incoming()) && (isAgent() || incoming().email == request.auth.token.email);
+      allow update: if isEmailVerified() && isValidTicket(incoming()) && isAgent();
+      allow delete: if isAdmin();
+    }
+
+    // Prompts Collection
+    match /prompts/{promptId} {
+      allow read: if isEmailVerified();
+      allow create, update: if isEmailVerified() && isValidPrompt(incoming()) && isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Prompt Tests Collection
+    match /tests/{testId} {
+      allow read: if isEmailVerified();
+      allow create, update: if isEmailVerified() && isValidTest(incoming()) && isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Knowledge Documents Collection
+    match /documents/{documentId} {
+      allow read: if isEmailVerified();
+      allow create, update: if isEmailVerified() && isValidDoc(incoming()) && isAgent();
+      allow delete: if isAdmin();
+    }
+
+    // Logs Collection
+    match /logs/{logId} {
+      allow read: if isEmailVerified() && isAdmin();
+      // Allow writing critical audit and error records
+      allow create: if isEmailVerified() && isValidLog(incoming());
+      allow update, delete: if false; // Audit logs are immutable and permanent
+    }
+  }
+}

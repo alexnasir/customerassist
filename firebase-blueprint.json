@@ -1,0 +1,172 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "System users and service agents with roles",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for user" },
+        "name": { "type": "string", "description": "Display name of the user" },
+        "email": { "type": "string", "format": "email", "description": "Email address of the user" },
+        "role": { "type": "string", "enum": ["admin", "agent", "customer"], "description": "Account privileges level" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp when account was created" }
+      },
+      "required": ["id", "name", "email", "role", "createdAt"]
+    },
+    "Conversation": {
+      "title": "Conversation",
+      "description": "Historical or active thread of communication with a customer",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique conversation ID" },
+        "customerId": { "type": "string", "description": "ID of the customer" },
+        "customerName": { "type": "string", "description": "Name of the customer" },
+        "language": { "type": "string", "enum": ["en", "sw", "auto"], "description": "Active or auto-detected language of conversation" },
+        "status": { "type": "string", "enum": ["active", "escalated", "resolved"], "description": "Current resolution status of conversation" },
+        "activePromptId": { "type": "string", "description": "ID of prompt version utilized" },
+        "rating": { "type": "integer", "description": "CSAT rating from 1 to 5" },
+        "feedback": { "type": "string", "description": "Free text qualitative customer feedback" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "lastMessageAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "customerId", "customerName", "language", "status", "createdAt", "lastMessageAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Individual message inside a communication thread",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "conversationId": { "type": "string" },
+        "sender": { "type": "string", "enum": ["user", "ai", "agent"] },
+        "senderName": { "type": "string" },
+        "content": { "type": "string" },
+        "type": { "type": "string", "enum": ["text", "voice"] },
+        "audioUrl": { "type": "string" },
+        "latencyMs": { "type": "integer" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "conversationId", "sender", "senderName", "content", "type", "timestamp"]
+    },
+    "SupportTicket": {
+      "title": "SupportTicket",
+      "description": "Escalated high-priority customer ticket for manual resolution",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "conversationId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "category": { "type": "string" },
+        "priority": { "type": "string", "enum": ["low", "medium", "high"] },
+        "status": { "type": "string", "enum": ["open", "pending", "resolved"] },
+        "description": { "type": "string" },
+        "assignedAgentId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "conversationId", "customerName", "email", "category", "priority", "status", "description", "createdAt"]
+    },
+    "PromptVersion": {
+      "title": "PromptVersion",
+      "description": "System prompt instructions with version history",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "version": { "type": "integer" },
+        "content": { "type": "string" },
+        "language": { "type": "string", "enum": ["en", "sw", "multilingual"] },
+        "isActive": { "type": "boolean" },
+        "evaluationScore": { "type": "number" },
+        "costPer1kTokens": { "type": "number" },
+        "resolutionRate": { "type": "number" },
+        "latencyMs": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "version", "content", "language", "isActive", "evaluationScore", "costPer1kTokens", "resolutionRate", "latencyMs", "createdAt"]
+    },
+    "PromptTest": {
+      "title": "PromptTest",
+      "description": "A/B test details between system prompt variations",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "promptAId": { "type": "string" },
+        "promptBId": { "type": "string" },
+        "status": { "type": "string", "enum": ["running", "completed"] },
+        "startDate": { "type": "string", "format": "date-time" },
+        "endDate": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "promptAId", "promptBId", "status", "startDate", "createdAt"]
+    },
+    "KnowledgeDocument": {
+      "title": "KnowledgeDocument",
+      "description": "Resource documents for RAG context searches",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "content": { "type": "string" },
+        "category": { "type": "string" },
+        "chunkCount": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "content", "category", "chunkCount", "createdAt"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Security and system execution tracking audit trail",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "action": { "type": "string" },
+        "actor": { "type": "string" },
+        "role": { "type": "string" },
+        "ipAddress": { "type": "string" },
+        "details": { "type": "string" },
+        "severity": { "type": "string", "enum": ["info", "warning", "critical"] },
+        "status": { "type": "string", "enum": ["success", "failure"] },
+        "payload": { "type": "string" },
+        "stackTrace": { "type": "string" }
+      },
+      "required": ["id", "timestamp", "action", "actor", "role", "ipAddress", "details", "severity", "status"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Individual system users"
+    },
+    "conversations/{conversationId}": {
+      "schema": "Conversation",
+      "description": "Conversation threads"
+    },
+    "conversations/{conversationId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Messages inside conversation threads"
+    },
+    "tickets/{ticketId}": {
+      "schema": "SupportTicket",
+      "description": "Escalated manual support tickets"
+    },
+    "prompts/{promptId}": {
+      "schema": "PromptVersion",
+      "description": "System prompt version library"
+    },
+    "tests/{testId}": {
+      "schema": "PromptTest",
+      "description": "Prompt A/B test experiments"
+    },
+    "documents/{documentId}": {
+      "schema": "KnowledgeDocument",
+      "description": "Internal knowledge documents"
+    },
+    "logs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Central audit and error log records"
+    }
+  }
+}
