@@ -343,11 +343,7 @@ export default function ChatView() {
                         )}
                       </div>
 
-                      {msg.latencyMs && (
-                        <span className="text-[10px] text-gray-500 block mt-1 ml-1 font-medium font-mono">
-                          Gemini Latency: {msg.latencyMs} ms
-                        </span>
-                      )}
+                
                     </div>
                   </div>
                 );

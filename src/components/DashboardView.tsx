@@ -242,14 +242,6 @@ export default function DashboardView() {
             <div className="pt-4 border-t border-[#1E293B] space-y-3">
               <div className="flex items-center justify-between text-xs text-gray-400">
                 <div className="flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Model Engine</span>
-                </div>
-                <span className="text-white font-semibold">Gemini 3.5 Flash</span>
-              </div>
-
-              <div className="flex items-center justify-between text-xs text-gray-400">
-                <div className="flex items-center gap-1.5">
                   <AlertTriangle className="w-3.5 h-3.5 text-pink-400" />
                   <span>Simulated Hallucination Index</span>
                 </div>

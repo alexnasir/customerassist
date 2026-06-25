@@ -196,7 +196,7 @@ export default function KnowledgeBaseView() {
           <Search className="w-4 h-4 text-cyan-400" />
           RAG Retrieval Simulator
         </h3>
-        <p className="text-xs text-gray-400 leading-relaxed mb-6">Test how the Gemini engine parses and scores documents during an active customer chat request.</p>
+        <p className="text-xs text-gray-400 leading-relaxed mb-6">Test how the Duka Letu Agent engine parses and scores documents during an active customer chat request.</p>
 
         <div className="space-y-4">
           <div className="relative">

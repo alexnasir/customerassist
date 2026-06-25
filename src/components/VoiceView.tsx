@@ -330,7 +330,7 @@ export default function VoiceView() {
             {voiceStatus === 'idle' && 'Click the microphone to start speaking'}
             {voiceStatus === 'recording' && 'Listening... Click again when finished'}
             {voiceStatus === 'processing' && 'Synthesizing voice transcription...'}
-            {voiceStatus === 'speaking' && 'Gemini is reading response audio...'}
+            {voiceStatus === 'speaking' && 'Duka Letu Assist is reading response audio...'}
           </p>
           <p className="text-xs text-gray-400 mt-1">
             Toggle English or Swahili support below. Responses will be synthesized in your selected dialect instantly.
@@ -406,7 +406,7 @@ export default function VoiceView() {
           <div className="space-y-4 flex-1 overflow-y-auto">
             {userTranscript && (
               <div className="bg-[#090D16] border border-[#1E293B] p-3.5 rounded-xl">
-                <span className="text-[9px] font-bold text-cyan-400 uppercase tracking-wider block mb-1">Customer Speech Transcript</span>
+                <span className="text-[9px] font-bold text-cyan-400 uppercase tracking-wider block mb-1">You</span>
                 <p className="text-xs text-white leading-relaxed font-medium">{userTranscript}</p>
               </div>
             )}
@@ -414,8 +414,7 @@ export default function VoiceView() {
             {aiResponseText && (
               <div className="bg-[#090D16] border border-[#1E293B] p-3.5 rounded-xl">
                 <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-wider block mb-1 flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-                  Gemini Support Agent Answer
+                  Duka Letu Agent
                 </span>
                 <p className="text-xs text-gray-300 leading-relaxed font-medium">{aiResponseText}</p>
               </div>
@@ -436,7 +435,7 @@ export default function VoiceView() {
             <Compass className="w-4 h-4 text-cyan-400" />
             Click-to-Speak Scenarios
           </h4>
-          <p className="text-[11px] text-gray-400 mb-4 leading-relaxed">Don't want to use your mic? Click any query below to run the Gemini Multilingual TTS & RAG loop instantly.</p>
+          <p className="text-[11px] text-gray-400 mb-4 leading-relaxed">Don't want to use your mic? Click any query below to run the Duka Letu Agent Multilingual TTS & RAG loop instantly.</p>
           
           <div className="space-y-2.5">
             {voicePrompts.map((prompt, i) => (
