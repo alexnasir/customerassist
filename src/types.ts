@@ -1,5 +1,5 @@
 /**
- * Shared Type Definitions for OmniAssist AI
+ * Shared Type Definitions for Duka Letu Agent
  */
 
 export type UserRole = 'admin' | 'agent' | 'customer';
