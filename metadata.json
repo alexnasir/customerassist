@@ -1,6 +1,6 @@
 {
-  "name": "OmniAssist AI",
-  "description": "Multilingual Voice and Chat Customer Support Platform powered by Gemini AI with Prompt Versioning, A/B Testing, Knowledge Base RAG, and Analytics.",
+  "name": "Duka Letu Agent",
+  "description": "Multilingual Voice and Chat Customer Support Platform with Prompt Versioning, A/B Testing, Knowledge Base RAG, and Analytics.",
   "requestFramePermissions": ["microphone"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

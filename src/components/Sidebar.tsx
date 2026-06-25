@@ -40,7 +40,7 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
       <div className="p-6 border-b border-[#1E293B] flex items-center gap-3">
         
         <div>
-          <h1 className="font-bold text-white text-lg tracking-tight leading-none">Duka Letu Assist</h1>
+          <h1 className="font-bold text-white text-lg tracking-tight leading-none">Duka Letu Agent</h1>
           <span className="text-[10px] text-cyan-400 font-medium tracking-widest uppercase">Support SaaS</span>
         </div>
       </div>

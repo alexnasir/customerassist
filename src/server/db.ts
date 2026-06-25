@@ -32,7 +32,7 @@ const DEFAULT_PROMPTS: PromptVersion[] = [
     id: 'p-en-v1',
     name: 'English Default Support System',
     version: 1,
-    content: `You are the Duka Letu Assist Customer Support Voice & Chat Agent, a friendly, professional assistant. 
+    content: `You are the Duka Letu Agent Customer Support Voice & Chat Agent, a friendly, professional assistant. 
 Your goal is to answer queries using the retrieved Knowledge Base documents when available.
 
 CRITICAL RESPONSE STYLE RULES:
@@ -75,7 +75,7 @@ Be helpful, friendly, and conversational!`,
     id: 'p-en-v2',
     name: 'English Concise Support Pro',
     version: 2,
-    content: `You are Duka Letu Assist Customer Support. 
+    content: `You are Duka Letu Agent Customer Support. 
 Answer questions using the provided context. Speak clearly and concisely.
 
 CRITICAL RESPONSE STYLE RULES:
@@ -116,7 +116,7 @@ If the customer asks for a person, immediately trigger human transfer. Always ch
     id: 'p-sw-v1',
     name: 'Swahili Default Support',
     version: 1,
-    content: `Wewe ni msaidizi wa Duka Letu Assist Customer Support, unaongea Kiswahili fasaha na chenye adabu. 
+    content: `Wewe ni msaidizi wa Duka Letu Agent Customer Support, unaongea Kiswahili fasaha na chenye adabu. 
 Jibu maswali kulingana na Nyaraka za Msingi wa Maarifa. 
 
 KANUNI MUHIMU ZA MAJIBU:
@@ -257,7 +257,7 @@ const INITIAL_DB: DatabaseSchema = {
       id: 'msg-2',
       conversationId: 'conv-101',
       sender: 'ai',
-      senderName: 'Duka Letu Assist',
+      senderName: 'Duka Letu Agent',
       content: 'Hello Alex! I would be glad to check your refund status. According to our return policy, refunds are processed within 5-7 business days after we receive your package. Do you have your return tracking number or order number so I can look it up for you?',
       type: 'text',
       latencyMs: 310,
@@ -276,7 +276,7 @@ const INITIAL_DB: DatabaseSchema = {
       id: 'msg-4',
       conversationId: 'conv-101',
       sender: 'ai',
-      senderName: 'Duka Letu Assist',
+      senderName: 'Duka Letu Agent',
       content: 'Thank you. I have checked order #OMNI-99321. It looks like our warehouse received your shoe return on June 20th. Today is June 24th, which marks 4 business days. The refund is still within the processing window of 5-7 business days. Would you like to escalate this to our finance team to check if they can expedite it?',
       type: 'text',
       latencyMs: 350,
@@ -295,7 +295,7 @@ const INITIAL_DB: DatabaseSchema = {
       id: 'msg-6',
       conversationId: 'conv-101',
       sender: 'ai',
-      senderName: 'Duka Letu Assist',
+      senderName: 'Duka Letu Agent',
       content: 'I understand the urgency. I am escalating this conversation and creating an urgent support ticket for you now. An agent will be with you shortly.',
       type: 'text',
       latencyMs: 290,
@@ -315,7 +315,7 @@ const INITIAL_DB: DatabaseSchema = {
       id: 'msg-11',
       conversationId: 'conv-102',
       sender: 'ai',
-      senderName: 'Duka Letu Assist',
+      senderName: 'Duka Letu Agent',
       content: 'Habari Juma! Nitafurahi kukusaidia kuangalia oda yako. Tafadhali nipe namba ya oda yako ili nianze kuikagua sasa hivi.',
       type: 'text',
       latencyMs: 400,

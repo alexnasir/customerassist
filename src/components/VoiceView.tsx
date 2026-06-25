@@ -330,7 +330,7 @@ export default function VoiceView() {
             {voiceStatus === 'idle' && 'Click the microphone to start speaking'}
             {voiceStatus === 'recording' && 'Listening... Click again when finished'}
             {voiceStatus === 'processing' && 'Synthesizing voice transcription...'}
-            {voiceStatus === 'speaking' && 'Duka Letu Assist is reading response audio...'}
+            {voiceStatus === 'speaking' && 'Duka Letu Agent is reading response audio...'}
           </p>
           <p className="text-xs text-gray-400 mt-1">
             Toggle English or Swahili support below. Responses will be synthesized in your selected dialect instantly.
