@@ -142,6 +142,7 @@ export default function KnowledgeBaseView() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {documents.map((doc) => (
             <div key={doc.id} className="bg-[#0F172A] border border-[#1E293B] p-5 rounded-2xl relative group shadow-lg">
+              {/* 
               <button
                 onClick={() => handleDeleteDoc(doc.id)}
                 className="absolute top-4 right-4 p-1.5 bg-rose-950/20 text-rose-400 hover:text-white hover:bg-rose-950 border border-rose-900/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-150"
@@ -149,6 +150,7 @@ export default function KnowledgeBaseView() {
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
+              */}
 
               <div className="flex items-start gap-4">
                 <div className="p-3 bg-cyan-950/40 text-cyan-400 rounded-xl border border-cyan-800/30">

@@ -212,13 +212,13 @@ export default function PromptView() {
                         >
                           Activate
                         </button>
-                        <button
+                        {/* <button
                           onClick={() => handleDelete(p.id)}
                           className="p-1.5 bg-rose-950/20 text-rose-400 hover:text-white hover:bg-rose-950 border border-rose-900/20 rounded-lg transition-all duration-150"
                           title="Delete Version"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        </button> */}
                       </>
                     )}
                   </div>
