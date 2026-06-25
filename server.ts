@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { db } from './src/server/db.js';
-import { geminiService } from './src/server/gemini.js';
+import { geminiService, SwahiliSpeechOptimizer } from './src/server/gemini.js';
 import { Message, Conversation, SupportTicket, PromptVersion, PromptTest, KnowledgeDocument } from './src/types.js';
 
 async function startServer() {
@@ -237,9 +237,9 @@ async function startServer() {
 
   // --- VOICE AI ENDPOINTS ---
   app.post('/api/voice/process', async (req, res) => {
-    const { conversationId, audio, language, voiceName } = req.body;
-    if (!conversationId || !audio) {
-      res.status(400).json({ error: 'conversationId and audio payload are required' });
+    const { conversationId, audio, language, voiceName, text } = req.body;
+    if (!conversationId || (!audio && !text)) {
+      res.status(400).json({ error: 'conversationId and either audio or text payload are required' });
       return;
     }
 
@@ -250,8 +250,12 @@ async function startServer() {
     }
 
     try {
-      // 1. Transcribe incoming base64 voice input using Gemini Audio API
-      const transcribedText = await geminiService.transcribeAudio(audio, language);
+      // 1. Get transcription (from passed text, or by transcribing incoming base64 voice input via Gemini)
+      let transcribedText = text;
+      if (!transcribedText && audio) {
+        transcribedText = await geminiService.transcribeAudio(audio, language);
+      }
+
       if (!transcribedText) {
         res.status(400).json({ error: 'Speech was not detected or failed to transcribe' });
         return;
@@ -272,9 +276,104 @@ async function startServer() {
       // 3. Generate response using active prompts & RAG
       const aiResponse = await geminiService.generateResponse(conversationId, transcribedText, language);
 
-      // 4. Synthesize answer text to speech via Gemini Speech Synthesis
-      const synthVoice = voiceName || (language === 'sw' ? 'Zephyr' : 'Kore');
-      const base64AudioOut = await geminiService.synthesizeSpeech(aiResponse.content, synthVoice);
+      const ttsStart = Date.now();
+      let responseLang: 'sw' | 'en' | 'mixed' = 'en';
+      let chosenVoice = voiceName || 'Kore';
+      let voiceLocale = 'en-US';
+      let fallbackStatus: 'none' | 'active' | 'rejected' = 'none';
+      let ttsError: string | null = null;
+      let textToSynthesize = aiResponse.content;
+
+      try {
+        // A. Classify the language of the AI's response content
+        responseLang = await geminiService.classifyResponseLanguage(aiResponse.content);
+        
+        // B. Route based on classification
+        if (responseLang === 'sw' || responseLang === 'mixed') {
+          // Kiswahili & Mixed Language Optimization
+          console.log(`[TTS PIPELINE] Swahili speech route selected. Original response: "${aiResponse.content.substring(0, 50)}..."`);
+          
+          textToSynthesize = await SwahiliSpeechOptimizer.optimize(aiResponse.content);
+          console.log(`[TTS PIPELINE] Swahili speech optimized: "${textToSynthesize.substring(0, 50)}..."`);
+
+          // Validate selected voice for Swahili support
+          const swahiliVoices = ['Zephyr', 'Aoede', 'Puck'];
+          const requestedVoiceLower = (voiceName || '').toLowerCase();
+          const isValidSwahiliVoice = swahiliVoices.some(v => v.toLowerCase() === requestedVoiceLower);
+          
+          if (isValidSwahiliVoice) {
+            chosenVoice = swahiliVoices.find(v => v.toLowerCase() === requestedVoiceLower)!;
+            voiceLocale = 'sw-KE / Swahili Multilingual';
+          } else {
+            // Validation failed, fallback to Swahili-compatible voice instead of English-centric voice
+            chosenVoice = 'Zephyr';
+            voiceLocale = 'sw-KE / Swahili Multilingual (Validated Fallback)';
+            if (voiceName) {
+              console.warn(`[TTS PIPELINE] Rejected English-centric voice '${voiceName}' for Swahili response. Defaulted to '${chosenVoice}'.`);
+              fallbackStatus = 'active';
+            }
+          }
+        } else {
+          // English Response Workflow
+          const englishVoices = ['Kore', 'Fenrir', 'Charon'];
+          const requestedVoiceLower = (voiceName || '').toLowerCase();
+          const isValidEnglishVoice = englishVoices.some(v => v.toLowerCase() === requestedVoiceLower);
+          
+          if (isValidEnglishVoice) {
+            chosenVoice = englishVoices.find(v => v.toLowerCase() === requestedVoiceLower)!;
+          } else {
+            chosenVoice = 'Kore';
+          }
+          voiceLocale = 'en-US';
+        }
+      } catch (err: any) {
+        console.error('[TTS PIPELINE] Language pre-route error:', err);
+        ttsError = err.message || String(err);
+      }
+
+      // 4. Synthesize optimized text to speech via Gemini Speech Synthesis
+      let base64AudioOut = '';
+      let mimeTypeOut = 'audio/wav';
+      let activeProvider = 'Unknown';
+      try {
+        const synthResult = await geminiService.synthesizeSpeech(textToSynthesize, chosenVoice, responseLang === 'mixed' ? 'sw' : responseLang);
+        base64AudioOut = synthResult.audioResponse;
+        mimeTypeOut = synthResult.mimeType;
+        activeProvider = synthResult.provider;
+        if (synthResult.errors && synthResult.errors.length > 0) {
+          ttsError = synthResult.errors.join('; ');
+        }
+      } catch (synthErr: any) {
+        console.error('[TTS PIPELINE] Synthesis execution error:', synthErr);
+        ttsError = synthErr.message || String(synthErr);
+        base64AudioOut = 'UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAAAAAA=='; // safe empty wave fallback
+        mimeTypeOut = 'audio/wav';
+        activeProvider = 'Emergency Fallback';
+      }
+
+      const ttsDuration = Date.now() - ttsStart;
+
+      // Log TTS Diagnostics to Audit Logs
+      db.createAuditLog({
+        action: 'Voice TTS Diagnostics',
+        actor: 'SwahiliSpeechOptimizer Engine',
+        role: 'system-service',
+        ipAddress: '127.0.0.1',
+        details: `TTS Speech pipeline executed for ${responseLang.toUpperCase()} text using provider ${activeProvider} with voice '${chosenVoice}' (${voiceLocale}) in ${ttsDuration}ms.`,
+        severity: ttsError ? 'warning' : 'info',
+        status: ttsError ? 'failure' : 'success',
+        payload: JSON.stringify({
+          responseLanguage: responseLang,
+          selectedProvider: activeProvider,
+          selectedVoice: chosenVoice,
+          voiceLocale,
+          fallbackStatus,
+          audioGenerationTimeMs: ttsDuration,
+          originalText: aiResponse.content,
+          synthesizedText: textToSynthesize,
+          error: ttsError
+        }, null, 2)
+      });
 
       // 5. Create assistant message
       const aiMsg: Message = {
@@ -295,6 +394,7 @@ async function startServer() {
         assistantMessage: aiMsg,
         transcription: transcribedText,
         audioResponse: base64AudioOut,
+        audioMimeType: mimeTypeOut,
         sources: aiResponse.sources,
         escalated: aiResponse.escalated
       });
@@ -302,6 +402,78 @@ async function startServer() {
     } catch (e: any) {
       console.error('Voice AI error:', e);
       res.status(500).json({ error: e.message || 'Voice processing error' });
+    }
+  });
+
+  // Dedicated server-side Swahili speech synthesizer endpoint (bypasses browser TTS restrictions completely)
+  app.post('/api/voice/synthesize', async (req, res) => {
+    const { text, voiceName, language } = req.body;
+    if (!text) {
+      res.status(400).json({ error: 'Text payload is required' });
+      return;
+    }
+
+    try {
+      const start = Date.now();
+      const responseLang = language || (await geminiService.classifyResponseLanguage(text));
+      
+      let textToSynthesize = text;
+      let chosenVoice = voiceName || 'Zephyr';
+      
+      if (responseLang === 'sw' || responseLang === 'mixed') {
+        textToSynthesize = await SwahiliSpeechOptimizer.optimize(text);
+        
+        const swahiliVoices = ['Zephyr', 'Aoede', 'Puck'];
+        const requestedVoiceLower = (voiceName || '').toLowerCase();
+        const isValidSwahiliVoice = swahiliVoices.some(v => v.toLowerCase() === requestedVoiceLower);
+        if (isValidSwahiliVoice) {
+          chosenVoice = swahiliVoices.find(v => v.toLowerCase() === requestedVoiceLower)!;
+        } else {
+          chosenVoice = 'Zephyr';
+        }
+      } else {
+        const englishVoices = ['Kore', 'Fenrir', 'Charon'];
+        const requestedVoiceLower = (voiceName || '').toLowerCase();
+        const isValidEnglishVoice = englishVoices.some(v => v.toLowerCase() === requestedVoiceLower);
+        if (isValidEnglishVoice) {
+          chosenVoice = englishVoices.find(v => v.toLowerCase() === requestedVoiceLower)!;
+        } else {
+          chosenVoice = 'Kore';
+        }
+      }
+
+      const synthResult = await geminiService.synthesizeSpeech(textToSynthesize, chosenVoice, responseLang === 'mixed' ? 'sw' : responseLang);
+      const duration = Date.now() - start;
+
+      // Log TTS Diagnostics to Audit Logs for standalone requests
+      db.createAuditLog({
+        action: 'Standalone Voice Synthesis',
+        actor: 'SwahiliSpeechOptimizer Engine',
+        role: 'system-service',
+        ipAddress: '127.0.0.1',
+        details: `Standalone voice synthesis completed for ${responseLang.toUpperCase()} using provider ${synthResult.provider} with voice '${chosenVoice}' in ${duration}ms.`,
+        severity: 'info',
+        status: 'success',
+        payload: JSON.stringify({
+          language: responseLang,
+          selectedProvider: synthResult.provider,
+          selectedVoice: chosenVoice,
+          audioGenerationTimeMs: duration,
+          originalText: text,
+          synthesizedText: textToSynthesize
+        }, null, 2)
+      });
+
+      res.json({
+        audioResponse: synthResult.audioResponse,
+        audioMimeType: synthResult.mimeType,
+        provider: synthResult.provider,
+        voiceName: chosenVoice,
+        language: responseLang
+      });
+    } catch (e: any) {
+      console.error('[SYNTHESIZE API] Standalone synthesis failed:', e);
+      res.status(500).json({ error: e.message || 'Speech synthesis failed' });
     }
   });
 

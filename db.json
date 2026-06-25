@@ -1,0 +1,941 @@
+{
+  "users": [
+    {
+      "id": "usr-1",
+      "name": "OmniAdmin",
+      "email": "admin@DukaLetuAssist.com",
+      "passwordHash": "admin123",
+      "role": "admin",
+      "createdAt": "2026-06-25T18:01:08.727Z"
+    },
+    {
+      "id": "usr-2",
+      "name": "Agent Sarah",
+      "email": "agent@DukaLetuAssist.com",
+      "passwordHash": "agent123",
+      "role": "agent",
+      "createdAt": "2026-06-25T18:01:08.727Z"
+    },
+    {
+      "id": "usr-3",
+      "name": "Alex Customer",
+      "email": "customer@DukaLetuAssist.com",
+      "passwordHash": "customer123",
+      "role": "customer",
+      "createdAt": "2026-06-25T18:01:08.727Z"
+    }
+  ],
+  "conversations": [
+    {
+      "id": "conv-101",
+      "customerId": "usr-3",
+      "customerName": "Alex Customer",
+      "language": "en",
+      "status": "escalated",
+      "activePromptId": "p-en-v1",
+      "createdAt": "2026-06-25T16:01:08.727Z",
+      "lastMessageAt": "2026-06-25T19:04:58.047Z"
+    },
+    {
+      "id": "conv-102",
+      "customerId": "cust-anon-1",
+      "customerName": "Juma K.",
+      "language": "sw",
+      "status": "active",
+      "activePromptId": "p-sw-v1",
+      "createdAt": "2026-06-25T17:31:08.727Z",
+      "lastMessageAt": "2026-06-25T17:51:08.727Z"
+    },
+    {
+      "id": "conv-103",
+      "customerId": "usr-3",
+      "customerName": "Alex Customer",
+      "language": "en",
+      "status": "resolved",
+      "rating": 5,
+      "feedback": "Excellent response and very quick!",
+      "activePromptId": "p-en-v1",
+      "createdAt": "2026-06-24T18:01:08.727Z",
+      "lastMessageAt": "2026-06-24T19:01:08.727Z"
+    },
+    {
+      "id": "conv-2019",
+      "customerId": "usr-3",
+      "customerName": "Alex Customer",
+      "language": "en",
+      "status": "active",
+      "createdAt": "2026-06-25T18:55:39.529Z",
+      "lastMessageAt": "2026-06-25T18:55:39.529Z"
+    }
+  ],
+  "messages": [
+    {
+      "id": "msg-1",
+      "conversationId": "conv-101",
+      "sender": "user",
+      "senderName": "Alex Customer",
+      "content": "Hello, I returned my shoes last week and still have not received my refund. Can you help me?",
+      "type": "text",
+      "timestamp": "2026-06-25T16:01:08.727Z"
+    },
+    {
+      "id": "msg-2",
+      "conversationId": "conv-101",
+      "sender": "ai",
+      "senderName": "Duka Letu Assist",
+      "content": "Hello Alex! I would be glad to check your refund status. According to our return policy, refunds are processed within 5-7 business days after we receive your package. Do you have your return tracking number or order number so I can look it up for you?",
+      "type": "text",
+      "latencyMs": 310,
+      "timestamp": "2026-06-25T16:02:08.727Z"
+    },
+    {
+      "id": "msg-3",
+      "conversationId": "conv-101",
+      "sender": "user",
+      "senderName": "Alex Customer",
+      "content": "Yes, my order number is #OMNI-99321.",
+      "type": "text",
+      "timestamp": "2026-06-25T16:11:08.727Z"
+    },
+    {
+      "id": "msg-4",
+      "conversationId": "conv-101",
+      "sender": "ai",
+      "senderName": "Duka Letu Assist",
+      "content": "Thank you. I have checked order #OMNI-99321. It looks like our warehouse received your shoe return on June 20th. Today is June 24th, which marks 4 business days. The refund is still within the processing window of 5-7 business days. Would you like to escalate this to our finance team to check if they can expedite it?",
+      "type": "text",
+      "latencyMs": 350,
+      "timestamp": "2026-06-25T16:12:08.727Z"
+    },
+    {
+      "id": "msg-5",
+      "conversationId": "conv-101",
+      "sender": "user",
+      "senderName": "Alex Customer",
+      "content": "Yes, please connect me with a support agent. I need this refund urgently.",
+      "type": "text",
+      "timestamp": "2026-06-25T16:16:08.727Z"
+    },
+    {
+      "id": "msg-6",
+      "conversationId": "conv-101",
+      "sender": "ai",
+      "senderName": "Duka Letu Assist",
+      "content": "I understand the urgency. I am escalating this conversation and creating an urgent support ticket for you now. An agent will be with you shortly.",
+      "type": "text",
+      "latencyMs": 290,
+      "timestamp": "2026-06-25T16:17:08.727Z"
+    },
+    {
+      "id": "msg-10",
+      "conversationId": "conv-102",
+      "sender": "user",
+      "senderName": "Juma K.",
+      "content": "Habari, nataka kujua oda yangu iko wapi.",
+      "type": "text",
+      "timestamp": "2026-06-25T17:31:08.727Z"
+    },
+    {
+      "id": "msg-11",
+      "conversationId": "conv-102",
+      "sender": "ai",
+      "senderName": "Duka Letu Assist",
+      "content": "Habari Juma! Nitafurahi kukusaidia kuangalia oda yako. Tafadhali nipe namba ya oda yako ili nianze kuikagua sasa hivi.",
+      "type": "text",
+      "latencyMs": 400,
+      "timestamp": "2026-06-25T17:32:08.727Z"
+    },
+    {
+      "id": "msg-1782411498704-uv",
+      "conversationId": "conv-101",
+      "sender": "user",
+      "senderName": "Alex Customer",
+      "content": "Please provide the recording or the link to the audio file you would like me to transcribe. Once you provide it, I will generate an exact, highly accurate transcript for you.",
+      "type": "voice",
+      "timestamp": "2026-06-25T18:18:18.704Z"
+    },
+    {
+      "id": "msg-1782411502524-aiv",
+      "conversationId": "conv-101",
+      "sender": "ai",
+      "senderName": "OmniAssist AI",
+      "content": "I apologize, but I believe there may be a misunderstanding. I am the Duka Letu Assist customer support agent, and I do not have any audio files for you to transcribe. I am here to assist you with your questions regarding our services and policies.\n\nIf you have any further questions about our platform or need additional help, please let me know. Otherwise,  Let me escalate this conversation and get a human support specialist to assist you right away.",
+      "type": "voice",
+      "audioUrl": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAAAAAA==",
+      "latencyMs": 1202,
+      "timestamp": "2026-06-25T18:18:22.524Z"
+    },
+    {
+      "id": "msg-1782411522582-uv",
+      "conversationId": "conv-101",
+      "sender": "user",
+      "senderName": "Alex Customer",
+      "content": "Please provide the recording or a link to the audio/video file you would like me to transcribe. Once you provide the content, I will generate the transcript for you.",
+      "type": "voice",
+      "timestamp": "2026-06-25T18:18:42.582Z"
+    },
+    {
+      "id": "msg-1782411526519-aiv",
+      "conversationId": "conv-101",
+      "sender": "ai",
+      "senderName": "OmniAssist AI",
+      "content": "I apologize, but there seems to be a misunderstanding. I am the Duka Letu Assist customer support agent, and I do not have any audio or video files for you to transcribe. My purpose is to assist you with questions regarding our services and company policies.\n\nSince I am unable to assist with your request,  Let me escalate this conversation and get a human support specialist to assist you right away.",
+      "type": "voice",
+      "audioUrl": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAAAAAA==",
+      "latencyMs": 1529,
+      "timestamp": "2026-06-25T18:18:46.519Z"
+    },
+    {
+      "id": "msg-1782411601264-uv",
+      "conversationId": "conv-101",
+      "sender": "user",
+      "senderName": "Alex Customer",
+      "content": "Please provide the audio file or a link to the recording you would like me to transcribe. Once you provide the source, I will be happy to generate an accurate transcript for you.",
+      "type": "voice",
+      "timestamp": "2026-06-25T18:20:01.264Z"
+    },
+    {
+      "id": "msg-1782411604583-aiv",
+      "conversationId": "conv-101",
+      "sender": "ai",
+      "senderName": "OmniAssist AI",
+      "content": "I apologize, but there is a misunderstanding. I am the Duka Letu Assist customer support agent, and I do not have any audio files or recordings for you to transcribe. My role is to assist you with questions regarding our services and company policies.\n\nSince I am unable to assist with your request,  Let me escalate this conversation and get a human support specialist to assist you right away.",
+      "type": "voice",
+      "audioUrl": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAAAAAA==",
+      "latencyMs": 974,
+      "timestamp": "2026-06-25T18:20:04.583Z"
+    },
+    {
+      "id": "msg-1782411718812-uv",
+      "conversationId": "conv-101",
+      "sender": "user",
+      "senderName": "Alex Customer",
+      "content": "Please provide the recording or a link to the audio file you would like me to transcribe. Once you provide it, I will be happy to generate an accurate transcript for you.",
+      "type": "voice",
+      "timestamp": "2026-06-25T18:21:58.812Z"
+    },
+    {
+      "id": "msg-1782411720956-uv",
+      "conversationId": "conv-101",
+      "sender": "user",
+      "senderName": "Alex Customer",
+      "content": "Please provide the audio file or a link to the recording you would like me to transcribe. Once you provide the content, I will be able to generate the transcript for you.",
+      "type": "voice",
+      "timestamp": "2026-06-25T18:22:00.956Z"
+    },
+    {
+      "id": "msg-1782411722850-aiv",
+      "conversationId": "conv-101",
+      "sender": "ai",
+      "senderName": "OmniAssist AI",
+      "content": "Samahani, inaonekana kuna kutoelewana. Mimi ni msaidizi wa huduma kwa wateja wa Duka Letu Assist, na niko hapa kukusaidia kwa maswali yanayohusu huduma zetu na sera za kampuni yetu.\n\nWacha nikuunganishe na mhudumu wa usaidizi sasa hivi ili akusaidie vizuri zaidi.",
+      "type": "voice",
+      "audioUrl": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAAAAAA==",
+      "latencyMs": 1637,
+      "timestamp": "2026-06-25T18:22:02.850Z"
+    },
+    {
+      "id": "msg-1782411723502-uv",
+      "conversationId": "conv-101",
+      "sender": "user",
+      "senderName": "Alex Customer",
+      "content": "Please provide the audio file or the link to the recording you would like me to transcribe. Once you provide the source, I will be able to generate the transcript for you.",
+      "type": "voice",
+      "timestamp": "2026-06-25T18:22:03.502Z"
+    },
+    {
+      "id": "msg-1782411724481-uv",
+      "conversationId": "conv-101",
+      "sender": "user",
+      "senderName": "Alex Customer",
+      "content": "Please provide the audio file or a link to the recording you would like me to transcribe. Once you provide the source, I will be happy to generate an accurate transcript for you.",
+      "type": "voice",
+      "timestamp": "2026-06-25T18:22:04.481Z"
+    },
+    {
+      "id": "msg-1782411724844-aiv",
+      "conversationId": "conv-101",
+      "sender": "ai",
+      "senderName": "OmniAssist AI",
+      "content": "Samahani, lakini inaonekana kuna kutoelewana. Mimi ni msaidizi wa huduma kwa wateja wa Duka Letu Assist, na jukumu langu ni kukusaidia kwa maswali yanayohusu huduma zetu na sera za kampuni yetu.\n\nWacha nikuunganishe na mhudumu wa usaidizi sasa hivi ili akusaidie vizuri zaidi.",
+      "type": "voice",
+      "audioUrl": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAAAAAA==",
+      "latencyMs": 1449,
+      "timestamp": "2026-06-25T18:22:04.844Z"
+    },
+    {
+      "id": "msg-1782411726657-aiv",
+      "conversationId": "conv-101",
+      "sender": "ai",
+      "senderName": "OmniAssist AI",
+      "content": "Samahani, inaonekana bado kuna kutoelewana. Mimi ni msaidizi wa huduma kwa wateja wa Duka Letu Assist, na niko hapa kukusaidia kwa maswali yanayohusu huduma zetu na sera za kampuni yetu.\n\nWacha nikuunganishe na mhudumu wa usaidizi sasa hivi ili akusaidie vizuri zaidi.",
+      "type": "voice",
+      "audioUrl": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAAAAAA==",
+      "latencyMs": 982,
+      "timestamp": "2026-06-25T18:22:06.657Z"
+    },
+    {
+      "id": "msg-1782411727707-aiv",
+      "conversationId": "conv-101",
+      "sender": "ai",
+      "senderName": "OmniAssist AI",
+      "content": "Samahani, inaonekana bado kuna kutoelewana. Mimi ni msaidizi wa huduma kwa wateja wa Duka Letu Assist, na niko hapa kukusaidia kwa maswali yanayohusu huduma zetu na sera za kampuni yetu.\n\nWacha nikuunganishe na mhudumu wa usaidizi sasa hivi ili akusaidie vizuri zaidi.",
+      "type": "voice",
+      "audioUrl": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAAAAAA==",
+      "latencyMs": 784,
+      "timestamp": "2026-06-25T18:22:07.707Z"
+    },
+    {
+      "id": "msg-1782411864774-uv",
+      "conversationId": "conv-101",
+      "sender": "user",
+      "senderName": "Alex Customer",
+      "content": "Where is my order #OMNI-99321?",
+      "type": "voice",
+      "timestamp": "2026-06-25T18:24:24.774Z"
+    },
+    {
+      "id": "msg-1782411868702-aiv",
+      "conversationId": "conv-101",
+      "sender": "ai",
+      "senderName": "OmniAssist AI",
+      "content": "I'd be happy to check your order status for you.\n\nTo check the status of your order #OMNI-99321, please log into your customer account, navigate to \"My Orders\", and select the order you wish to view.\n\nIf you need any assistance, feel free to contact us at alexnasiali45@gmail.com or call +254 713386680.",
+      "type": "voice",
+      "audioUrl": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAAAAAA==",
+      "latencyMs": 1182,
+      "timestamp": "2026-06-25T18:24:28.702Z"
+    },
+    {
+      "id": "msg-1782411917598-uv",
+      "conversationId": "conv-101",
+      "sender": "user",
+      "senderName": "Alex Customer",
+      "content": "Nataka kujua hali ya oda yangu.",
+      "type": "voice",
+      "timestamp": "2026-06-25T18:25:17.598Z"
+    },
+    {
+      "id": "msg-1782411921217-aiv",
+      "conversationId": "conv-101",
+      "sender": "ai",
+      "senderName": "OmniAssist AI",
+      "content": "I'd be happy to check that for you in English.\n\nTo check the status of your order, please log into your account, open the \"My Orders\" section, and select the order you wish to view.\n\nIf you need any assistance, feel free to ask or contact us at alexnasiali45@gmail.com.",
+      "type": "voice",
+      "audioUrl": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAAAAAA==",
+      "latencyMs": 1333,
+      "timestamp": "2026-06-25T18:25:21.217Z"
+    },
+    {
+      "id": "msg-1782411948877-uv",
+      "conversationId": "conv-101",
+      "sender": "user",
+      "senderName": "Alex Customer",
+      "content": "Nataka kujua hali ya oda yangu.",
+      "type": "voice",
+      "timestamp": "2026-06-25T18:25:48.877Z"
+    },
+    {
+      "id": "msg-1782411952463-aiv",
+      "conversationId": "conv-101",
+      "sender": "ai",
+      "senderName": "OmniAssist AI",
+      "content": "Nitafurahi kukusaidia kuangalia hali ya oda yako.\n\nTafadhali ingia kwenye akaunti yako, fungua sehemu ya \"Oda Zangu\", kisha uchague oda unayotaka kuiona.\n\nKama unahitaji msaada wowote zaidi, jisikie huru kuuliza au kuwasiliana nasi kwa alexnasiali45@gmail.com.",
+      "type": "voice",
+      "audioUrl": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAAAAAA==",
+      "latencyMs": 1314,
+      "timestamp": "2026-06-25T18:25:52.463Z"
+    },
+    {
+      "id": "msg-1782412020309-uv",
+      "conversationId": "conv-101",
+      "sender": "user",
+      "senderName": "Alex Customer",
+      "content": "What is your refund policy?",
+      "type": "voice",
+      "timestamp": "2026-06-25T18:27:00.309Z"
+    },
+    {
+      "id": "msg-1782412024237-aiv",
+      "conversationId": "conv-101",
+      "sender": "ai",
+      "senderName": "OmniAssist AI",
+      "content": "If you'd like a refund, I'd be happy to help.\n\nFor subscriptions, you can request a refund within 7 days of your initial purchase. Just provide your account details and a brief explanation of the reason for the request. Please note that custom development work, custom integrations, consulting services, and completed implementation projects are not eligible for refunds.\n\nIf your request is related to a product order, refunds or returns are available for items that are damaged, defective, incorrect, or significantly different from what was advertised. The item should be returned within 7 days of delivery and, where possible, in its original condition.\n\nOnce a refund is approved, it is typically processed within 7–14 business days and returned through the original payment method.\n\nIf you'd like to start a refund request, please contact us at alexnasiali45@gmail.com or call +254 713386680, and we'll guide you through the process.",
+      "type": "voice",
+      "audioUrl": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAAAAAA==",
+      "latencyMs": 1659,
+      "timestamp": "2026-06-25T18:27:04.237Z"
+    },
+    {
+      "id": "msg-1782412684150-uv",
+      "conversationId": "conv-101",
+      "sender": "user",
+      "senderName": "Alex Customer",
+      "content": "Where is my order #OMNI-99321?",
+      "type": "voice",
+      "timestamp": "2026-06-25T18:38:04.150Z"
+    },
+    {
+      "id": "msg-1782412688060-aiv",
+      "conversationId": "conv-101",
+      "sender": "ai",
+      "senderName": "OmniAssist AI",
+      "content": "I'd be happy to help.\n\nTo check the status of your order #OMNI-99321, please log into your customer account, navigate to \"My Orders\", and select the order you wish to view.\n\nIf you need any assistance, feel free to reach out to us at alexnasiali45@gmail.com or call +254 713386680, and we will be glad to assist you.",
+      "type": "voice",
+      "audioUrl": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAAAAAA==",
+      "latencyMs": 1122,
+      "timestamp": "2026-06-25T18:38:08.060Z"
+    },
+    {
+      "id": "msg-1782413093017-uv",
+      "conversationId": "conv-101",
+      "sender": "user",
+      "senderName": "Alex Customer",
+      "content": "What is your refund policy?",
+      "type": "voice",
+      "timestamp": "2026-06-25T18:44:53.017Z"
+    },
+    {
+      "id": "msg-1782413097129-aiv",
+      "conversationId": "conv-101",
+      "sender": "ai",
+      "senderName": "OmniAssist AI",
+      "content": "If you would like a refund, I am happy to explain how it works.\n\nFor subscriptions, you may request a refund within 7 days of your initial purchase by providing your account details and a valid reason. Please note that custom development, custom integrations, professional consulting services, and completed implementation projects are non-refundable.\n\nFor product orders, you may request a return if the item is damaged, defective, incorrect, or significantly different from its description. Items must be returned within 7 days of delivery and should be in their original condition with packaging where possible. Please note that customized products, digital products, perishable goods, and items damaged through misuse are not eligible for return.\n\nOnce a refund is approved, it is processed within 7 to 14 business days using your original payment method.\n\nTo start a request, please contact us at alexnasiali45@gmail.com or call +254 713386680.",
+      "type": "voice",
+      "audioUrl": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAAAAAA==",
+      "latencyMs": 1262,
+      "timestamp": "2026-06-25T18:44:57.129Z"
+    },
+    {
+      "id": "msg-1782413169930-uv",
+      "conversationId": "conv-101",
+      "sender": "user",
+      "senderName": "Alex Customer",
+      "content": "Nataka kujua hali ya oda yangu.",
+      "type": "voice",
+      "timestamp": "2026-06-25T18:46:09.930Z"
+    },
+    {
+      "id": "msg-1782413173531-aiv",
+      "conversationId": "conv-101",
+      "sender": "ai",
+      "senderName": "OmniAssist AI",
+      "content": "Nitafurahi kukusaidia kuangalia hali ya oda yako.\n\nTafadhali ingia kwenye akaunti yako, fungua sehemu ya \"Oda Zangu\", kisha uchague oda unayotaka kuiona.\n\nKama unahitaji msaada wowote zaidi, jisikie huru kuuliza au kuwasiliana nasi kwa barua pepe alexnasiali45@gmail.com au kwa simu namba +254 713386680.",
+      "type": "voice",
+      "audioUrl": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAAAAAA==",
+      "latencyMs": 995,
+      "timestamp": "2026-06-25T18:46:13.531Z"
+    },
+    {
+      "id": "msg-1782413536856-uv",
+      "conversationId": "conv-101",
+      "sender": "user",
+      "senderName": "Alex Customer",
+      "content": "Nataka kujua hali ya oda yangu.",
+      "type": "voice",
+      "timestamp": "2026-06-25T18:52:16.856Z"
+    },
+    {
+      "id": "msg-1782413539655-uv",
+      "conversationId": "conv-101",
+      "sender": "user",
+      "senderName": "Alex Customer",
+      "content": "Nataka kujua hali ya oda yangu.",
+      "type": "voice",
+      "timestamp": "2026-06-25T18:52:19.655Z"
+    },
+    {
+      "id": "msg-1782413571836-uv",
+      "conversationId": "conv-101",
+      "sender": "user",
+      "senderName": "Alex Customer",
+      "content": "Nataka kujua hali ya oda yangu.",
+      "type": "voice",
+      "timestamp": "2026-06-25T18:52:51.836Z"
+    },
+    {
+      "id": "msg-1782413576165-aiv",
+      "conversationId": "conv-101",
+      "sender": "ai",
+      "senderName": "OmniAssist AI",
+      "content": "Nitafurahi kukusaidia kuangalia hali ya oda yako.\n\nTafadhali ingia kwenye akaunti yako, fungua sehemu ya \"Oda Zangu\", kisha uchague oda unayotaka kuiona.\n\nKama unahitaji msaada wowote zaidi, jisikie huru kuuliza au kuwasiliana nasi kwa barua pepe alexnasiali45@gmail.com au kwa simu namba +254 713386680.",
+      "type": "voice",
+      "audioUrl": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAAAAAA==",
+      "latencyMs": 1655,
+      "timestamp": "2026-06-25T18:52:56.165Z"
+    },
+    {
+      "id": "msg-1782413760571-uv",
+      "conversationId": "conv-101",
+      "sender": "user",
+      "senderName": "Alex Customer",
+      "content": "Nataka kujua hali ya oda yangu.",
+      "type": "voice",
+      "timestamp": "2026-06-25T18:56:00.571Z"
+    },
+    {
+      "id": "msg-1782413764784-aiv",
+      "conversationId": "conv-101",
+      "sender": "ai",
+      "senderName": "OmniAssist AI",
+      "content": "Samahani kwa usumbufu. Kama nilivyoeleza awali, ili kuona hali ya oda yako, tafadhali fuata hatua hizi:\n\n1. Ingia kwenye akaunti yako.\n2. Fungua sehemu ya \"Oda Zangu\".\n3. Chagua oda unayotaka kuiona.\n\nIkiwa bado unapata changamoto au unahitaji msaada zaidi, tafadhali nijulishe ili nikuunganishe na mhudumu wetu wa kibinadamu. Vilevile, unaweza kuwasiliana nasi moja kwa moja kupitia barua pepe alexnasiali45@gmail.com au kwa simu namba +254 713386680.",
+      "type": "voice",
+      "audioUrl": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAAAAAA==",
+      "latencyMs": 1544,
+      "timestamp": "2026-06-25T18:56:04.784Z"
+    },
+    {
+      "id": "msg-1782414293969-uv",
+      "conversationId": "conv-101",
+      "sender": "user",
+      "senderName": "Alex Customer",
+      "content": "Nataka kujua hali ya oda yangu.",
+      "type": "voice",
+      "timestamp": "2026-06-25T19:04:53.969Z"
+    },
+    {
+      "id": "msg-1782414298047-aiv",
+      "conversationId": "conv-101",
+      "sender": "ai",
+      "senderName": "OmniAssist AI",
+      "content": "Samahani sana kwa kuendelea kupata changamoto hii. Kwa kuwa inaonekana bado unahitaji msaada zaidi ili kufuatilia oda yako, naomba nikuunganishe na mhudumu wetu wa kibinadamu ili akusaidie kwa kina.\n\n Let me escalate this conversation and get a human support specialist to assist you right away.\n\n⚠️ *Mazungumzo yako sasa hivi yanahamishiwa kwa mhudumu. Tafadhali subiri kidogo...*",
+      "type": "voice",
+      "audioUrl": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAAAAAA==",
+      "latencyMs": 1287,
+      "timestamp": "2026-06-25T19:04:58.047Z"
+    }
+  ],
+  "supportTickets": [
+    {
+      "id": "tkt-1",
+      "conversationId": "conv-101",
+      "customerName": "Alex Customer",
+      "email": "customer@DukaLetuAssist.com",
+      "category": "Refunds & Returns",
+      "priority": "high",
+      "status": "resolved",
+      "description": "Customer is requesting an expedited refund of shoe return for order #OMNI-99321. Received June 20th.",
+      "createdAt": "2026-06-25T16:17:08.727Z"
+    },
+    {
+      "id": "tkt-1646",
+      "conversationId": "conv-101",
+      "customerName": "Alex Customer",
+      "email": "alexcustomer@omniassist.ai",
+      "category": "Escalated Chat",
+      "priority": "medium",
+      "status": "open",
+      "description": "Customer escalated chat due to complex query or manual request. Last query: \"Nataka kujua hali ya oda yangu.\"",
+      "createdAt": "2026-06-25T19:04:55.257Z"
+    }
+  ],
+  "promptVersions": [
+    {
+      "id": "p-en-v1",
+      "name": "English Default Support System",
+      "version": 1,
+      "content": "You are the Duka Letu Assist Customer Support Voice & Chat Agent, a friendly, professional assistant. \nYour goal is to answer queries using the retrieved Knowledge Base documents when available. \nKeep answers concise, polite, and helpful. \n\nCRITICAL MANDATE: You MUST speak and answer strictly in English. Do NOT use any Swahili words or phrases.\nIf you cannot solve the issue or if the user asks for a human agent, state that you are escalating the conversation to a human support agent. \n\nBe helpful, friendly, and structured!",
+      "language": "en",
+      "isActive": true,
+      "evaluationScore": 92,
+      "costPer1kTokens": 0.0015,
+      "resolutionRate": 85,
+      "latencyMs": 340,
+      "createdAt": "2026-06-10T18:01:08.726Z"
+    },
+    {
+      "id": "p-en-v2",
+      "name": "English Concise Support Pro",
+      "version": 2,
+      "content": "You are Duka Letu Assist Customer Support. \nAnswer questions using the provided context. Speak clearly and concisely. Bullet points are preferred.\nCRITICAL MANDATE: You MUST speak and answer strictly in English. Do NOT use any Swahili words or phrases.\nIf the customer asks for a person, immediately trigger human transfer. Always check if they are satisfied.",
+      "language": "en",
+      "isActive": false,
+      "evaluationScore": 95,
+      "costPer1kTokens": 0.0012,
+      "resolutionRate": 89,
+      "latencyMs": 290,
+      "createdAt": "2026-06-20T18:01:08.727Z"
+    },
+    {
+      "id": "p-sw-v1",
+      "name": "Swahili Default Support",
+      "version": 1,
+      "content": "Wewe ni msaidizi wa Duka Letu Assist Customer Support, unaongea Kiswahili fasaha na chenye adabu. \nJibu maswali kulingana na Nyaraka za Msingi wa Maarifa. \n\nAGIZO MUHIMU LA LUGHA: Lazima ujibu na uzungumze kwa Kiswahili safi na fasaha pekee. Usichanganye Kiingereza isipokuwa kwa majina rasmi.\nUnapojibu kwa Kiswahili, tumia Kiswahili rahisi, wazi, na cha kawaida cha Kenya kinachotamkwa kwa urahisi (speech-friendly). Sentensi ziwe fupi na rahisi kueleweka bila kutumia tafsiri ya neno kwa neno ya Kiingereza au misemo ya kirasmi mno. Epuka kabisa misemo ya kiroboti na maneno kama \"kwa kina\", \"mhudumu wa kibinadamu\", \"mazungumzo yako yanahamishiwa\", \"ninafanya eskalesheni\", au \"kama nilivyoeleza awali\". Badala yake tumia misemo asilia kama: \"nitakuunganisha na mhudumu wetu\", \"atakusaidia zaidi\", \"tafadhali subiri kwa muda mfupi\", \"asante kwa uvumilivu wako\", na \"naomba radhi kwa usumbufu\". Kama bado unahitaji kumhamisha mteja kwa mtu mwingine, eleza hivi: \"Samahani kwa usumbufu huu. Naona bado unahitaji msaada zaidi kuhusu oda yako. Nitakuunganisha na mhudumu wetu wa usaidizi ili akusaidie moja kwa moja. Tafadhali subiri kwa muda mifupi. Asante kwa uvumilivu wako.\"",
+      "language": "sw",
+      "isActive": true,
+      "evaluationScore": 88,
+      "costPer1kTokens": 0.0015,
+      "resolutionRate": 81,
+      "latencyMs": 380,
+      "createdAt": "2026-06-15T18:01:08.727Z"
+    }
+  ],
+  "promptTests": [
+    {
+      "id": "test-1",
+      "name": "Support Agent Prompt Tone Test (English)",
+      "promptAId": "p-en-v1",
+      "promptBId": "p-en-v2",
+      "status": "running",
+      "startDate": "2026-06-21T18:01:08.727Z",
+      "promptAResults": {
+        "runs": 145,
+        "resolutions": 112,
+        "avgLatencyMs": 340,
+        "avgScore": 92,
+        "cost": 0.12,
+        "hallucinationRate": 2.1
+      },
+      "promptBResults": {
+        "runs": 138,
+        "resolutions": 119,
+        "avgLatencyMs": 290,
+        "avgScore": 95,
+        "cost": 0.09,
+        "hallucinationRate": 1.2
+      },
+      "createdAt": "2026-06-21T18:01:08.727Z"
+    }
+  ],
+  "knowledgeDocuments": [
+    {
+      "id": "doc-759",
+      "name": "Company Overview.txt",
+      "category": "Refunds & Returns",
+      "content": "DUKA LETU ASSIST - COMPANY OVERVIEW\n\nBusiness Name: Duka Letu Assist\n\nAbout Duka Letu Assist:\nDuka Letu Assist is an AI-powered customer support platform designed to help businesses automate customer interactions through intelligent chat and voice assistants. The platform provides instant responses, reduces support workload, and improves customer satisfaction.\n\nOur Services:\n\n* AI Chat Assistant\n* AI Voice Assistant\n* Customer Support Automation\n* Knowledge Base Management\n* FAQ Automation\n* Business Analytics and Reporting\n* API Integrations\n* Multi-channel Customer Support\n\nBusiness Hours:\nMonday - Friday: 8:00 AM - 6:00 PM\nSaturday: 9:00 AM - 2:00 PM\nSunday: Closed\n\nSupport Contact:\nEmail: [alexnasiali45@gmail.com](mailto:alexnasiali45@gmail.com)\nPhone: +254 713386680\n\nResponse Times:\n\n* Live Chat: Instant\n* Email Support: Within 24 Hours\n* Technical Support: Within 48 Hours\n\nMission:\nTo help businesses provide fast, reliable, and scalable customer support using AI-powered automation.\n",
+      "chunkCount": 3,
+      "createdAt": "2026-06-25T18:08:13.667Z"
+    },
+    {
+      "id": "doc-607",
+      "name": "Platform Features.txt",
+      "category": "General FAQs",
+      "content": "DUKA LETU ASSIST PLATFORM FEATURES\n\nWhat can Duka Letu Assist do?\n\n* Answer customer questions automatically.\n* Handle frequently asked questions.\n* Provide 24/7 customer support.\n* Escalate complex issues to human agents.\n* Support both voice and chat interactions.\n* Search uploaded company documents and knowledge bases.\n* Generate support analytics and insights.\n* Integrate with external systems through APIs.\n\nSupported Channels:\n\n* Website Chat\n* WhatsApp Integration (if enabled)\n* Voice Assistant\n* Customer Support Dashboard\n\nBenefits:\n\n* Faster response times\n* Reduced support costs\n* Improved customer satisfaction\n* Consistent customer communication\n",
+      "chunkCount": 2,
+      "createdAt": "2026-06-25T18:09:03.320Z"
+    },
+    {
+      "id": "doc-258",
+      "name": "Customer Support FAQ.txt",
+      "category": "General FAQs",
+      "content": "CUSTOMER SUPPORT FAQ\n\nQ: How do I contact support?\nA: You can contact support through email, phone, or live chat.\n\nQ: What are your support hours?\nA: Monday to Friday, 8:00 AM to 6:00 PM.\n\nQ: How do I reset my password?\nA: Click \"Forgot Password\" on the login page and follow the instructions.\n\nQ: Can I change my subscription plan?\nA: Yes. Plans can be upgraded or downgraded from your account settings.\n\nQ: Does Duka Letu Assist work 24/7?\nA: Yes. AI assistants remain available 24/7 unless maintenance is in progress.\n\nQ: What happens if the AI cannot answer a question?\nA: The conversation can be escalated to a human support representative.\n\nQ: Can I upload my own company documents?\nA: Yes. Administrators can upload documents that the AI uses to answer customer questions.\n",
+      "chunkCount": 2,
+      "createdAt": "2026-06-25T18:09:34.100Z"
+    },
+    {
+      "id": "doc-452",
+      "name": "Pricing Plans.txt",
+      "category": "General FAQs",
+      "content": "PRICING PLANS\n\nDuka Letu Assist offers flexible subscription plans designed for businesses of all sizes.\n\nSTARTER PLAN\nSuitable for small businesses and startups.\n\nFeatures:\n\n* AI Chat Assistant\n* Knowledge Base Upload\n* Basic Analytics\n* Email Support\n* Up to 1,000 conversations per month\n\nPROFESSIONAL PLAN\nSuitable for growing businesses.\n\nFeatures:\n\n* Everything in Starter\n* AI Voice Assistant\n* Advanced Analytics\n* Priority Support\n* API Access\n* Up to 10,000 conversations per month\n\nENTERPRISE PLAN\nSuitable for large organizations.\n\nFeatures:\n\n* Everything in Professional\n* Custom Integrations\n* Dedicated Account Manager\n* Advanced Security Controls\n* Unlimited Conversations\n* Custom AI Training\n\nFor custom pricing and enterprise requirements, contact:\nEmail: [alexnasiali45@gmail.com](mailto:alexnasiali45@gmail.com)\nPhone: +254 713386680\n",
+      "chunkCount": 3,
+      "createdAt": "2026-06-25T18:10:37.843Z"
+    },
+    {
+      "id": "doc-408",
+      "name": "Refund Policy.txt",
+      "category": "Refunds & Returns",
+      "content": "REFUND POLICY\n\nAt Duka Letu Assist, customer satisfaction is important to us.\n\nEligibility for Refunds:\n\n* Customers may request a refund within 7 days of initial subscription purchase.\n* Refund requests must include a valid reason and account details.\n\nNon-Refundable Services:\n\n* Custom development services.\n* Custom integrations.\n* Professional consulting services.\n* Completed implementation projects.\n\nSubscription Cancellations:\n\n* Customers may cancel subscriptions at any time.\n* Cancellation prevents future billing but does not automatically trigger a refund.\n\nRefund Processing:\n\n* Approved refunds are processed within 7-14 business days.\n* Refunds are issued through the original payment method whenever possible.\n\nHow to Request a Refund:\nEmail: [alexnasiali45@gmail.com](mailto:alexnasiali45@gmail.com)\nPhone: +254 713386680\n\nOur support team will review all refund requests on a case-by-case basis.\n",
+      "chunkCount": 3,
+      "createdAt": "2026-06-25T18:11:09.159Z"
+    },
+    {
+      "id": "doc-336",
+      "name": "Terms and Conditions.txt",
+      "category": "General FAQs",
+      "content": "TERMS AND CONDITIONS\n\nAcceptance of Terms:\nBy using Duka Letu Assist, you agree to these terms and conditions.\n\nAccount Responsibilities:\n\n* Users are responsible for maintaining the security of their accounts.\n* Users must provide accurate and up-to-date information.\n\nAcceptable Use:\nUsers may not:\n\n* Upload illegal content.\n* Attempt unauthorized access to systems.\n* Use the platform for malicious or harmful activities.\n* Interfere with platform operations.\n\nService Availability:\nWhile we strive for maximum uptime, uninterrupted service cannot be guaranteed.\n\nIntellectual Property:\nAll software, branding, and platform assets remain the property of Duka Letu Assist.\n\nLimitation of Liability:\nDuka Letu Assist is not liable for indirect, incidental, or consequential damages arising from platform usage.\n\nTermination:\nWe reserve the right to suspend or terminate accounts that violate these terms.\n\nChanges to Terms:\nTerms may be updated periodically. Continued use of the platform constitutes acceptance of revised terms.\n\nContact:\nEmail: [alexnasiali45@gmail.com](mailto:alexnasiali45@gmail.com)\nPhone: +254 713386680\n",
+      "chunkCount": 3,
+      "createdAt": "2026-06-25T18:11:39.674Z"
+    },
+    {
+      "id": "doc-283",
+      "name": "Privacy Policy.txt",
+      "category": "General FAQs",
+      "content": "PRIVACY POLICY\n\nLast Updated: June 2026\n\nIntroduction:\nDuka Letu Assist is committed to protecting customer privacy and maintaining the security of personal information.\n\nInformation We Collect:\n\n* Name and contact information\n* Email address\n* Phone number\n* Business information\n* Account credentials\n* Usage and activity data\n* Uploaded documents and knowledge base content\n\nHow We Use Information:\n\n* Provide and improve our services\n* Authenticate user accounts\n* Respond to support requests\n* Process payments\n* Monitor platform performance\n* Improve AI assistant accuracy\n\nData Security:\nWe implement industry-standard security measures to protect customer data from unauthorized access, disclosure, alteration, or destruction.\n\nData Sharing:\nWe do not sell customer data. Information may only be shared with trusted service providers necessary for platform operations or where required by law.\n\nData Retention:\nCustomer information is retained only as long as necessary to provide services and comply with legal obligations.\n\nCustomer Rights:\nCustomers may request:\n\n* Access to their personal data\n* Correction of inaccurate information\n* Account deletion\n* Data export where applicable\n\nCookies:\nOur platform may use cookies and similar technologies to improve user experience and platform functionality.\n\nContact:\nEmail: [alexnasiali45@gmail.com](mailto:alexnasiali45@gmail.com)\nPhone: +254 713386680\n",
+      "chunkCount": 4,
+      "createdAt": "2026-06-25T18:12:41.803Z"
+    },
+    {
+      "id": "doc-765",
+      "name": "Customer Account FAQ.txt",
+      "category": "General FAQs",
+      "content": "CUSTOMER ACCOUNT FAQ\n\nQ: How do I create an account?\nA: Click \"Register\" and complete the account registration form.\n\nQ: How do I log in?\nA: Enter your registered email address and password on the login page.\n\nQ: I forgot my password. What should I do?\nA: Click \"Forgot Password\" and follow the password reset instructions.\n\nQ: Can I update my account details?\nA: Yes. Customers can update personal information from Account Settings.\n\nQ: Can I change my email address?\nA: Yes. Navigate to Account Settings and update your email information.\n\nQ: How can I view my order history?\nA: Log in and open the \"My Orders\" section.\n\nQ: How do I delete my account?\nA: Contact customer support to request account deletion.\n\nQ: Is my personal information secure?\nA: We use security measures to protect customer information and account data.\n\nQ: Can I have multiple delivery addresses?\nA: Yes. Customers can save multiple delivery addresses in their account.\n\nQ: Who do I contact for account-related issues?\nA: Contact customer support using the details below.\n\nSupport Contact:\nEmail: [alexnasiali45@gmail.com](mailto:alexnasiali45@gmail.com)\nPhone: +254 713386680\n",
+      "chunkCount": 3,
+      "createdAt": "2026-06-25T18:16:33.172Z"
+    },
+    {
+      "id": "doc-295",
+      "name": "Order Status & Tracking.txt",
+      "category": "Order Status & Tracking",
+      "content": "ORDER STATUS & TRACKING\n\nHow can I check my order status?\n\nCustomers can check their order status by:\n\n1. Logging into their customer account.\n2. Navigating to \"My Orders\".\n3. Selecting the order they wish to view.\n\nOrder Status Definitions:\n\nPending\n\n* Order has been received and is awaiting processing.\n\nProcessing\n\n* Order is being prepared and packed.\n\nShipped\n\n* Order has been dispatched and is on its way.\n\nOut for Delivery\n\n* The delivery partner is delivering the order.\n\nDelivered\n\n* The order has been successfully delivered.\n\nCancelled\n\n* The order was cancelled before shipment.\n\nTracking Information:\n\nOnce an order is shipped, customers receive:\n\n* Tracking number\n* Courier information\n* Estimated delivery date\n\nTracking Updates:\n\nTracking information may take several hours to appear after shipment.\n\nIf tracking information has not updated within 48 hours, customers should contact support.\n\nOrder Support Contact:\nEmail: [alexnasiali45@gmail.com](mailto:alexnasiali45@gmail.com)\nPhone: +254 713386680\n",
+      "chunkCount": 3,
+      "createdAt": "2026-06-25T18:17:09.388Z"
+    },
+    {
+      "id": "doc-435",
+      "name": "Shipping & Delivery.txt",
+      "category": "Shipping & Delivery",
+      "content": "SHIPPING & DELIVERY\n\nDelivery Coverage:\n\nWe deliver to supported locations across Kenya.\n\nDelivery Time Estimates:\n\nNairobi:\n\n* 1 to 2 business days\n\nMajor Towns:\n\n* 2 to 4 business days\n\nRemote Areas:\n\n* 3 to 7 business days\n\nDelivery Charges:\n\nShipping fees are calculated during checkout based on:\n\n* Delivery location\n* Order size\n* Delivery method selected\n\nDelivery Attempts:\n\nIf the customer is unavailable:\n\n* The delivery partner may attempt redelivery.\n* The customer may be contacted to arrange another delivery time.\n\nDelivery Delays:\n\nDelivery may be delayed due to:\n\n* Weather conditions\n* Public holidays\n* High order volumes\n* Courier operational issues\n\nIncorrect Address:\n\nCustomers are responsible for providing accurate delivery information.\n\nOrders delayed due to incorrect addresses may incur additional charges.\n\nDamaged Deliveries:\n\nCustomers should report damaged packages within 24 hours of delivery.\n\nSupport Contact:\nEmail: [alexnasiali45@gmail.com](mailto:alexnasiali45@gmail.com)\nPhone: +254 713386680\n",
+      "chunkCount": 3,
+      "createdAt": "2026-06-25T18:17:35.845Z"
+    },
+    {
+      "id": "doc-418",
+      "name": "Returns & Refunds.txt",
+      "category": "Refunds & Returns",
+      "content": "RETURNS & REFUNDS\n\nReturn Eligibility:\n\nCustomers may request a return if:\n\n* The item is damaged.\n* The item is defective.\n* The wrong item was received.\n* The item significantly differs from its description.\n\nReturn Conditions:\n\nReturned items must:\n\n* Be in original condition.\n* Include original packaging where possible.\n* Be returned within 7 days of delivery.\n\nNon-Returnable Items:\n\n* Customized products\n* Digital products\n* Perishable goods\n* Items damaged through misuse\n\nRefund Process:\n\nStep 1:\nSubmit a return request.\n\nStep 2:\nReturn request is reviewed.\n\nStep 3:\nItem inspection is completed.\n\nStep 4:\nRefund approval is issued.\n\nRefund Timelines:\n\nApproved refunds are processed within 7 to 14 business days.\n\nRefund Methods:\n\nRefunds are issued through the original payment method whenever possible.\n\nExchange Requests:\n\nCustomers may request a replacement item instead of a refund where applicable.\n\nSupport Contact:\nEmail: [alexnasiali45@gmail.com](mailto:alexnasiali45@gmail.com)\nPhone: +254 713386680\n",
+      "chunkCount": 3,
+      "createdAt": "2026-06-25T18:18:08.454Z"
+    },
+    {
+      "id": "doc-406",
+      "name": "Hali ya Oda na Ufuatiliaji.txt",
+      "category": "Order Status & Tracking",
+      "content": "HALI YA ODA NA UFUATILIAJI\n\nNinawezaje kufuatilia oda yangu?\n\nWateja wanaweza kufuatilia oda zao kwa:\n\n1. Kuingia kwenye akaunti yao.\n2. Kufungua sehemu ya \"Oda Zangu\".\n3. Kuchagua oda wanayotaka kuona.\n\nMaana ya Hali za Oda:\n\nInasubiri Kushughulikiwa\n\n* Oda imepokelewa lakini bado haijaanza kushughulikiwa.\n\nInashughulikiwa\n\n* Oda inaandaliwa na kufungwa kwa ajili ya kutumwa.\n\nImetumwa\n\n* Oda imetolewa kwa kampuni ya usafirishaji.\n\nIko Njiani\n\n* Oda iko safarini kuelekea kwa mteja.\n\nImewasilishwa\n\n* Oda imefika kwa mteja.\n\nImeghairiwa\n\n* Oda imefutwa kabla ya kutumwa.\n\nMaelezo ya Ufuatiliaji:\n\nBaada ya oda kutumwa, mteja atapokea:\n\n* Nambari ya kufuatilia mzigo\n* Jina la kampuni ya usafirishaji\n* Makadirio ya tarehe ya kuwasilisha\n\nIwapo taarifa za ufuatiliaji hazijabadilika ndani ya saa 48, tafadhali wasiliana na huduma kwa wateja.\n\nMawasiliano:\nBarua Pepe: [alexnasiali45@gmail.com](mailto:alexnasiali45@gmail.com)\nSimu: +254 713386680\n",
+      "chunkCount": 3,
+      "createdAt": "2026-06-25T18:23:25.793Z"
+    },
+    {
+      "id": "doc-141",
+      "name": "USAFIRISHAJI NA UWASILISHAJI  Maeneo Tunayohudumia:  Tunawasilisha bidhaa katika maeneo yote yanayohudumiwa nchini Kenya.  Muda wa Uwasilishaji:  Nairobi:  * Siku 1 hadi 2 za kazi  Miji Mikuu:  * Siku 2 hadi 4 za kazi  Maeneo ya Mbali:  * Siku 3 hadi 7 za kazi  Gharama za Usafirishaji:  Gharama za usafirishaji huhesabiwa wakati wa kufanya oda kulingana na:  * Mahali pa kuwasilisha * Ukubwa wa oda * Njia ya usafirishaji iliyochaguliwa  Kuchelewa kwa Uwasilishaji:  Huenda kukawa na ucheleweshaji kutokana na:  * Hali mbaya ya hewa * Sikukuu za kitaifa * Oda nyingi kupita kawaida * Changamoto za kampuni ya usafirishaji  Anwani Isiyo Sahihi:  Mteja ana wajibu wa kuhakikisha anatoa anwani sahihi ya kuwasilisha bidhaa.  Bidhaa Iliyoharibika:  Ikiwa bidhaa imewasilishwa ikiwa imeharibika, mteja anatakiwa kutoa taarifa ndani ya saa 24 baada ya kupokea.  Mawasiliano: Barua Pepe: [alexnasiali45@gmail.com](mailto:alexnasiali45@gmail.com) Simu: +254 713386680",
+      "category": "Shipping & Delivery",
+      "content": "USAFIRISHAJI NA UWASILISHAJI\n\nMaeneo Tunayohudumia:\n\nTunawasilisha bidhaa katika maeneo yote yanayohudumiwa nchini Kenya.\n\nMuda wa Uwasilishaji:\n\nNairobi:\n\n* Siku 1 hadi 2 za kazi\n\nMiji Mikuu:\n\n* Siku 2 hadi 4 za kazi\n\nMaeneo ya Mbali:\n\n* Siku 3 hadi 7 za kazi\n\nGharama za Usafirishaji:\n\nGharama za usafirishaji huhesabiwa wakati wa kufanya oda kulingana na:\n\n* Mahali pa kuwasilisha\n* Ukubwa wa oda\n* Njia ya usafirishaji iliyochaguliwa\n\nKuchelewa kwa Uwasilishaji:\n\nHuenda kukawa na ucheleweshaji kutokana na:\n\n* Hali mbaya ya hewa\n* Sikukuu za kitaifa\n* Oda nyingi kupita kawaida\n* Changamoto za kampuni ya usafirishaji\n\nAnwani Isiyo Sahihi:\n\nMteja ana wajibu wa kuhakikisha anatoa anwani sahihi ya kuwasilisha bidhaa.\n\nBidhaa Iliyoharibika:\n\nIkiwa bidhaa imewasilishwa ikiwa imeharibika, mteja anatakiwa kutoa taarifa ndani ya saa 24 baada ya kupokea.\n\nMawasiliano:\nBarua Pepe: [alexnasiali45@gmail.com](mailto:alexnasiali45@gmail.com)\nSimu: +254 713386680\n",
+      "chunkCount": 3,
+      "createdAt": "2026-06-25T18:49:55.346Z"
+    },
+    {
+      "id": "doc-524",
+      "name": "Marejesho na Urejeshaji wa Pesa.txt",
+      "category": "Refunds & Returns",
+      "content": "MAREJESHO NA UREJESHAJI WA PESA\n\nMasharti ya Kurudisha Bidhaa:\n\nMteja anaweza kuomba kurudisha bidhaa ikiwa:\n\n* Bidhaa imeharibika.\n* Bidhaa ina kasoro.\n* Amepokea bidhaa isiyo sahihi.\n* Bidhaa haitofautiani na maelezo yaliyotolewa.\n\nMasharti ya Kukubali Marejesho:\n\nBidhaa lazima:\n\n* Iwe katika hali nzuri.\n* Iwe na vifungashio vyake vya awali inapowezekana.\n* Irudishwe ndani ya siku 7 baada ya kupokelewa.\n\nBidhaa Zisizoweza Kurudishwa:\n\n* Bidhaa zilizotengenezwa maalum kwa mteja.\n* Bidhaa za kidijitali.\n* Bidhaa zinazoharibika haraka.\n* Bidhaa zilizoharibiwa kutokana na matumizi mabaya.\n\nUtaratibu wa Urejeshaji wa Pesa:\n\n1. Mteja anawasilisha ombi la kurejeshewa pesa.\n2. Ombi linapitiwa.\n3. Bidhaa inakaguliwa.\n4. Uamuzi wa kurejesha pesa unafanywa.\n\nMuda wa Kurejesha Pesa:\n\nPesa zilizokubaliwa kurejeshwa hutumwa ndani ya siku 7 hadi 14 za kazi.\n\nNjia ya Kurejesha Pesa:\n\nPesa zitarejeshwa kupitia njia ile ile iliyotumika kufanya malipo inapowezekana.\n\nMawasiliano:\nBarua Pepe: [alexnasiali45@gmail.com](mailto:alexnasiali45@gmail.com)\nSimu: +254 713386680\n",
+      "chunkCount": 3,
+      "createdAt": "2026-06-25T18:50:19.954Z"
+    }
+  ],
+  "analytics": {
+    "totalConversations": 1240,
+    "activeUsers": 840,
+    "avgCsat": 4.6,
+    "resolutionRate": 50,
+    "totalTokens": 1482887,
+    "totalCost": 5.149624999999999,
+    "avgLatencyMs": 1406,
+    "escalationRate": 12,
+    "dailyMetrics": [
+      {
+        "date": "06-18",
+        "conversations": 85,
+        "escalations": 9,
+        "cost": 0.15,
+        "latencyMs": 320
+      },
+      {
+        "date": "06-19",
+        "conversations": 92,
+        "escalations": 12,
+        "cost": 0.17,
+        "latencyMs": 340
+      },
+      {
+        "date": "06-20",
+        "conversations": 110,
+        "escalations": 10,
+        "cost": 0.2,
+        "latencyMs": 350
+      },
+      {
+        "date": "06-21",
+        "conversations": 95,
+        "escalations": 11,
+        "cost": 0.18,
+        "latencyMs": 330
+      },
+      {
+        "date": "06-22",
+        "conversations": 125,
+        "escalations": 15,
+        "cost": 0.22,
+        "latencyMs": 310
+      },
+      {
+        "date": "06-23",
+        "conversations": 140,
+        "escalations": 18,
+        "cost": 0.25,
+        "latencyMs": 290
+      },
+      {
+        "date": "06-24",
+        "conversations": 155,
+        "escalations": 16,
+        "cost": 0.28,
+        "latencyMs": 300
+      }
+    ],
+    "topicDistribution": [
+      {
+        "topic": "Refunds & Returns",
+        "count": 480
+      },
+      {
+        "topic": "Shipping & Delivery",
+        "count": 320
+      },
+      {
+        "topic": "Order Status & Tracking",
+        "count": 250
+      },
+      {
+        "topic": "General FAQs",
+        "count": 140
+      },
+      {
+        "topic": "Technical Support",
+        "count": 50
+      }
+    ]
+  },
+  "auditLogs": [
+    {
+      "action": "User Authentication",
+      "actor": "OmniAdmin",
+      "role": "admin",
+      "ipAddress": "192.168.1.50",
+      "details": "Successful login for admin@DukaLetuAssist.com (admin) via credentials",
+      "severity": "info",
+      "status": "success",
+      "id": "log-1782414287573",
+      "timestamp": "2026-06-25T19:04:47.573Z"
+    },
+    {
+      "action": "User Authentication",
+      "actor": "OmniAdmin",
+      "role": "admin",
+      "ipAddress": "192.168.1.50",
+      "details": "Successful login for admin@DukaLetuAssist.com (admin) via credentials",
+      "severity": "info",
+      "status": "success",
+      "id": "log-1782413753421",
+      "timestamp": "2026-06-25T18:55:53.421Z"
+    },
+    {
+      "action": "User Authentication",
+      "actor": "OmniAdmin",
+      "role": "admin",
+      "ipAddress": "192.168.1.50",
+      "details": "Successful login for admin@DukaLetuAssist.com (admin) via credentials",
+      "severity": "info",
+      "status": "success",
+      "id": "log-1782413563681",
+      "timestamp": "2026-06-25T18:52:43.681Z"
+    },
+    {
+      "action": "User Authentication",
+      "actor": "OmniAdmin",
+      "role": "admin",
+      "ipAddress": "192.168.1.50",
+      "details": "Successful login for admin@DukaLetuAssist.com (admin) via credentials",
+      "severity": "info",
+      "status": "success",
+      "id": "log-1782413071526",
+      "timestamp": "2026-06-25T18:44:31.526Z"
+    },
+    {
+      "action": "User Authentication",
+      "actor": "OmniAdmin",
+      "role": "admin",
+      "ipAddress": "192.168.1.50",
+      "details": "Successful login for admin@DukaLetuAssist.com (admin) via credentials",
+      "severity": "info",
+      "status": "success",
+      "id": "log-1782412678276",
+      "timestamp": "2026-06-25T18:37:58.276Z"
+    },
+    {
+      "action": "User Authentication",
+      "actor": "OmniAdmin",
+      "role": "admin",
+      "ipAddress": "192.168.1.50",
+      "details": "Successful login for admin@DukaLetuAssist.com (admin) via credentials",
+      "severity": "info",
+      "status": "success",
+      "id": "log-1782411859450",
+      "timestamp": "2026-06-25T18:24:19.450Z"
+    },
+    {
+      "action": "User Authentication",
+      "actor": "OmniAdmin",
+      "role": "admin",
+      "ipAddress": "192.168.1.50",
+      "details": "Successful login for admin@DukaLetuAssist.com (admin) via credentials",
+      "severity": "info",
+      "status": "success",
+      "id": "log-1782410910713",
+      "timestamp": "2026-06-25T18:08:30.713Z"
+    },
+    {
+      "action": "User Authentication",
+      "actor": "OmniAdmin",
+      "role": "admin",
+      "ipAddress": "192.168.1.50",
+      "details": "Successful login for admin@DukaLetuAssist.com (admin) via credentials",
+      "severity": "info",
+      "status": "success",
+      "id": "log-1782410608811",
+      "timestamp": "2026-06-25T18:03:28.811Z"
+    },
+    {
+      "id": "log-1",
+      "timestamp": "2026-06-25T15:01:08.727Z",
+      "action": "User Authentication",
+      "actor": "OmniAdmin",
+      "role": "admin",
+      "ipAddress": "192.168.1.50",
+      "details": "Successful administrator login via dashboard",
+      "severity": "info",
+      "status": "success"
+    },
+    {
+      "id": "log-2",
+      "timestamp": "2026-06-25T15:31:08.727Z",
+      "action": "Prompt Deployment",
+      "actor": "OmniAdmin",
+      "role": "admin",
+      "ipAddress": "192.168.1.50",
+      "details": "Activated English Default Support System (p-en-v1) globally",
+      "severity": "info",
+      "status": "success"
+    },
+    {
+      "id": "log-3",
+      "timestamp": "2026-06-25T16:13:08.727Z",
+      "action": "API Authentication Failure",
+      "actor": "Anonymous",
+      "role": "customer",
+      "ipAddress": "45.120.21.99",
+      "details": "Attempted to access /api/prompts with invalid JWT key token",
+      "severity": "warning",
+      "status": "failure"
+    },
+    {
+      "id": "log-4",
+      "timestamp": "2026-06-25T17:16:08.727Z",
+      "action": "SQL Injection Blocked",
+      "actor": "Anonymous IP 185.10.220.14",
+      "role": "customer",
+      "ipAddress": "185.10.220.14",
+      "details": "Detected and sanitized malicious SQL command injection in chat query",
+      "severity": "critical",
+      "status": "failure"
+    },
+    {
+      "id": "log-5",
+      "timestamp": "2026-06-25T17:46:08.727Z",
+      "action": "Knowledge Document Sync",
+      "actor": "Agent Sarah",
+      "role": "agent",
+      "ipAddress": "192.168.1.102",
+      "details": "Successfully uploaded new knowledge document: OmniShop Return Policy.txt",
+      "severity": "info",
+      "status": "success"
+    }
+  ]
+}

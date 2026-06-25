@@ -22,8 +22,8 @@ interface SidebarProps {
 export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout }: SidebarProps) {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'agent'] },
-    { id: 'chat', label: 'Chat Assistant', icon: MessageSquare, roles: ['admin', 'agent', 'customer'] },
     { id: 'voice', label: 'Voice Assistant', icon: Mic, roles: ['admin', 'agent', 'customer'] },
+    { id: 'chat', label: 'Chat Assistant', icon: MessageSquare, roles: ['admin', 'agent', 'customer'] },
     { id: 'prompts', label: 'Prompt Manager', icon: Cpu, roles: ['admin'] },
     { id: 'knowledge', label: 'Knowledge Base', icon: BookOpen, roles: ['admin', 'agent'] },
     { id: 'tickets', label: 'Agent Workspace', icon: Ticket, roles: ['admin', 'agent'] },
@@ -38,9 +38,7 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
     <aside className="w-64 bg-[#0B0F19] text-gray-300 border-r border-[#1E293B] flex flex-col h-full shrink-0">
       {/* Brand Logo */}
       <div className="p-6 border-b border-[#1E293B] flex items-center gap-3">
-        <div className="bg-gradient-to-tr from-cyan-500 to-indigo-500 p-2 rounded-xl text-white shadow-lg shadow-cyan-500/10">
-          // <Sparkles className="w-5 h-5 animate-pulse" />
-        </div>
+        
         <div>
           <h1 className="font-bold text-white text-lg tracking-tight leading-none">Duka Letu Assist</h1>
           <span className="text-[10px] text-cyan-400 font-medium tracking-widest uppercase">Support SaaS</span>

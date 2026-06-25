@@ -78,34 +78,7 @@ export default function DashboardView() {
         </button>
       </div>
 
-      {/* Firebase Enterprise Integration Status */}
-      <div className="mb-8 p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm shadow-emerald-950/10">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-lg border border-emerald-500/20">
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9s2.015-9 4.5-9m0 0c5.523 0 10 4.477 10 10s-4.477 10-10 10M12 3a9 9 0 000 18" />
-            </svg>
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold text-white">Firebase cloud integrated</h3>
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-800/30 uppercase tracking-wider">Enterprise Mode</span>
-            </div>
-            <p className="text-xs text-gray-400 mt-1">
-              Active connections on Firestore database <code className="text-[11px] text-cyan-400 bg-[#0B0F19] px-1.5 py-0.5 rounded border border-gray-800">ai-studio-9c260d35-68d5-40e6-9f2e-a407eb34e4e4</code>. Secure ABAC controls enforced.
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-2 text-xs font-medium text-gray-400 self-stretch sm:self-auto justify-end">
-          <span className="px-2.5 py-1 bg-[#1E293B] rounded-lg border border-gray-800 flex items-center gap-1.5 text-gray-300">
-            <span className="h-2 w-2 rounded-full bg-emerald-400"></span> Auth: Google Single Sign-On
-          </span>
-          <span className="px-2.5 py-1 bg-[#1E293B] rounded-lg border border-gray-800 flex items-center gap-1.5 text-gray-300">
-            <span className="h-2 w-2 rounded-full bg-emerald-400"></span> Firestore Sync: Live
-          </span>
-        </div>
-      </div>
+     
 
       {/* Numerical Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

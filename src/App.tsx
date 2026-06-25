@@ -83,9 +83,7 @@ export default function App() {
           
           {/* Brand Logo Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex bg-gradient-to-tr from-cyan-500 to-indigo-500 p-3 rounded-2xl text-white shadow-xl shadow-cyan-500/10 mb-4 animate-pulse">
-              <Sparkles className="w-6 h-6" />
-            </div>
+
             <h1 className="text-2xl font-black text-white tracking-tight">Duka Letu Assist</h1>
             <p className="text-xs text-gray-400 mt-1.5 max-w-xs mx-auto">Multilingual Voice & Chat Support</p>
           </div>
