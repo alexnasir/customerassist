@@ -203,6 +203,10 @@ export default function ChatView() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
+  // Get latest assistant strategy
+  const latestAiMsg = [...messages].reverse().find(m => m.sender === 'ai' && m.strategy);
+  const activeStrategy = latestAiMsg?.strategy || activeConv?.strategy;
+
   return (
     <div className="flex-1 bg-[#090D16] flex h-full" id="chat-view">
       {/* LEFT PANEL: Conversation List */}
@@ -444,6 +448,68 @@ export default function ChatView() {
             <div className="bg-[#090D16] border border-[#1E293B] p-4 rounded-xl">
               <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest block mb-2">Retrieval Strategy</span>
               <p className="text-xs text-gray-400 leading-relaxed">The AI agent auto-queries the Knowledge Base FAQ and injects specific paragraphs into the system prompt context on each turn.</p>
+            </div>
+
+            {/* Conversation Strategy Engine UI Card */}
+            <div className="bg-[#090D16] border border-[#1E293B] p-4 rounded-xl">
+              <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest block mb-3 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                Active Support Strategy
+              </span>
+              
+              {activeStrategy ? (
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Strategy Type:</span>
+                    <div className="text-xs font-semibold px-2 py-1 bg-emerald-950/40 text-emerald-400 border border-emerald-800/20 rounded-md inline-block">
+                      {activeStrategy.strategyType}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Reasoning:</span>
+                    <p className="text-[11px] text-gray-300 leading-relaxed bg-[#0E1424] p-2 rounded border border-[#1E293B]/60">
+                      {activeStrategy.reasoning}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">Recommended Tactics:</span>
+                    <ul className="space-y-1 bg-[#0E1424] p-2 rounded border border-[#1E293B]/60">
+                      {activeStrategy.recommendedTactics.map((tactic, idx) => (
+                        <li key={idx} className="text-[10px] text-gray-300 flex items-start gap-1.5">
+                          <span className="text-emerald-400 font-bold mt-0.5">•</span>
+                          <span>{tactic}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="border-t border-[#1E293B] pt-3 mt-3">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Milestone Goals:</span>
+                    <ul className="space-y-2">
+                      {activeStrategy.goals.map((goal, idx) => (
+                        <li key={idx} className="flex items-center justify-between text-[11px] bg-[#0E1424] px-2.5 py-1.5 rounded border border-[#1E293B]/60">
+                          <span className={goal.achieved ? 'text-gray-500 line-through font-medium' : 'text-gray-300 font-medium'}>
+                            {goal.description}
+                          </span>
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide shrink-0 ${
+                            goal.achieved 
+                              ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-800/20' 
+                              : 'bg-amber-950/40 text-amber-400 border border-amber-800/20'
+                          }`}>
+                            {goal.achieved ? 'Done' : 'Pending'}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-xs text-gray-500 italic py-3 text-center bg-[#0E1424] rounded-lg border border-[#1E293B]/40">
+                  Send a message to let the strategy engine determine the optimal support path.
+                </div>
+              )}
             </div>
 
             <div className="bg-[#090D16] border border-[#1E293B] p-4 rounded-xl">

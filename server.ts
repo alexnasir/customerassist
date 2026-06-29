@@ -3,6 +3,7 @@ import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { db } from './src/server/db.js';
 import { geminiService, SwahiliSpeechOptimizer } from './src/server/gemini.js';
+import { supabaseService } from './src/server/supabase.js';
 import { Message, Conversation, SupportTicket, PromptVersion, PromptTest, KnowledgeDocument } from './src/types.js';
 
 async function startServer() {
@@ -98,6 +99,34 @@ async function startServer() {
     });
   });
 
+  // --- SUPABASE SYNC ENDPOINTS ---
+  app.get('/api/supabase/status', async (req, res) => {
+    try {
+      const status = await supabaseService.getStatus();
+      res.json(status);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to get Supabase status' });
+    }
+  });
+
+  app.post('/api/supabase/sync', async (req, res) => {
+    try {
+      const result = await supabaseService.syncNow();
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to sync to Supabase' });
+    }
+  });
+
+  app.post('/api/supabase/pull', async (req, res) => {
+    try {
+      const result = await supabaseService.pullNow();
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to restore database from Supabase' });
+    }
+  });
+
   // --- CONVERSATIONS & CHAT ---
   app.get('/api/conversations', (req, res) => {
     res.json(db.getConversations());
@@ -173,7 +202,14 @@ async function startServer() {
         content: aiResponse.content,
         type: 'text',
         latencyMs: aiResponse.latencyMs,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        intent: aiResponse.intent,
+        sentiment: aiResponse.sentiment,
+        confidenceScore: aiResponse.confidenceScore,
+        routedAgent: aiResponse.routedAgent,
+        toolsCalled: aiResponse.toolsCalled,
+        evaluation: aiResponse.evaluation,
+        strategy: aiResponse.strategy
       };
       db.createMessage(aiMsg);
 
@@ -385,7 +421,14 @@ async function startServer() {
         type: 'voice',
         audioUrl: base64AudioOut,
         latencyMs: aiResponse.latencyMs,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        intent: aiResponse.intent,
+        sentiment: aiResponse.sentiment,
+        confidenceScore: aiResponse.confidenceScore,
+        routedAgent: aiResponse.routedAgent,
+        toolsCalled: aiResponse.toolsCalled,
+        evaluation: aiResponse.evaluation,
+        strategy: aiResponse.strategy
       };
       db.createMessage(aiMsg);
 

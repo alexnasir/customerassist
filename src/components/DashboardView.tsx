@@ -8,7 +8,16 @@ import {
   AlertTriangle,
   TrendingUp,
   Award,
-  ChevronRight
+  ChevronRight,
+  Database,
+  RefreshCw,
+  UploadCloud,
+  DownloadCloud,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Copy,
+  Check
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -26,6 +35,189 @@ import {
 import { SystemAnalytics } from '../types.js';
 
 const COLORS = ['#06b6d4', '#6366f1', '#3b82f6', '#8b5cf6', '#ec4899'];
+
+const MASTER_SQL_SCHEMA = `
+-- MASTER SCHEMA DEFINITIONS FOR DUKA LETU AGENT
+-- Run this whole script in your Supabase SQL Editor to create all system tables!
+
+-- 1. Sync State Table
+CREATE TABLE IF NOT EXISTS duka_letu_sync (
+  id TEXT PRIMARY KEY,
+  data JSONB NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL
+);
+
+-- 2. Users Table
+CREATE TABLE IF NOT EXISTS users (
+  "id" TEXT PRIMARY KEY,
+  "name" TEXT,
+  "email" TEXT,
+  "passwordHash" TEXT,
+  "role" TEXT,
+  "createdAt" TIMESTAMPTZ
+);
+
+-- 3. Conversations Table
+CREATE TABLE IF NOT EXISTS conversations (
+  "id" TEXT PRIMARY KEY,
+  "customerId" TEXT,
+  "customerName" TEXT,
+  "language" TEXT,
+  "status" TEXT NOT NULL,
+  "activePromptId" TEXT,
+  "rating" INTEGER,
+  "feedback" TEXT,
+  "intent" TEXT,
+  "sentiment" TEXT,
+  "overallConfidence" NUMERIC,
+  "strategy" JSONB,
+  "customerMemory" JSONB,
+  "createdAt" TIMESTAMPTZ NOT NULL,
+  "lastMessageAt" TIMESTAMPTZ NOT NULL
+);
+
+-- 4. Messages Table
+CREATE TABLE IF NOT EXISTS messages (
+  "id" TEXT PRIMARY KEY,
+  "conversationId" TEXT REFERENCES conversations("id") ON DELETE CASCADE,
+  "sender" TEXT NOT NULL,
+  "senderName" TEXT NOT NULL,
+  "content" TEXT NOT NULL,
+  "type" TEXT NOT NULL,
+  "audioUrl" TEXT,
+  "latencyMs" INTEGER,
+  "timestamp" TIMESTAMPTZ NOT NULL,
+  "intent" TEXT,
+  "intentConfidence" NUMERIC,
+  "sentiment" TEXT,
+  "sentimentConfidence" NUMERIC,
+  "routedAgent" TEXT,
+  "confidenceScore" NUMERIC,
+  "toolsCalled" JSONB,
+  "strategy" JSONB,
+  "evaluation" JSONB
+);
+
+-- 5. Support Tickets Table
+CREATE TABLE IF NOT EXISTS support_tickets (
+  "id" TEXT PRIMARY KEY,
+  "conversationId" TEXT,
+  "customerName" TEXT NOT NULL,
+  "email" TEXT NOT NULL,
+  "category" TEXT NOT NULL,
+  "priority" TEXT NOT NULL,
+  "status" TEXT NOT NULL,
+  "description" TEXT,
+  "assignedAgentId" TEXT,
+  "createdAt" TIMESTAMPTZ NOT NULL
+);
+
+-- 6. Prompt Versions Table
+CREATE TABLE IF NOT EXISTS prompt_versions (
+  "id" TEXT PRIMARY KEY,
+  "name" TEXT NOT NULL,
+  "version" INTEGER NOT NULL,
+  "content" TEXT NOT NULL,
+  "language" TEXT NOT NULL,
+  "isActive" BOOLEAN NOT NULL DEFAULT false,
+  "evaluationScore" NUMERIC,
+  "costPer1kTokens" NUMERIC,
+  "resolutionRate" NUMERIC,
+  "latencyMs" INTEGER,
+  "createdAt" TIMESTAMPTZ NOT NULL
+);
+
+-- 7. Prompt Tests Table
+CREATE TABLE IF NOT EXISTS prompt_tests (
+  "id" TEXT PRIMARY KEY,
+  "name" TEXT NOT NULL,
+  "promptAId" TEXT,
+  "promptBId" TEXT,
+  "status" TEXT NOT NULL,
+  "startDate" TIMESTAMPTZ NOT NULL,
+  "endDate" TIMESTAMPTZ,
+  "promptAResults" JSONB,
+  "promptBResults" JSONB,
+  "createdAt" TIMESTAMPTZ NOT NULL
+);
+
+-- 8. Knowledge Documents Table
+CREATE TABLE IF NOT EXISTS knowledge_documents (
+  "id" TEXT PRIMARY KEY,
+  "name" TEXT NOT NULL,
+  "content" TEXT NOT NULL,
+  "category" TEXT NOT NULL,
+  "chunkCount" INTEGER NOT NULL,
+  "createdAt" TIMESTAMPTZ NOT NULL
+);
+
+-- 9. Knowledge Gaps Table
+CREATE TABLE IF NOT EXISTS knowledge_gaps (
+  "id" TEXT PRIMARY KEY,
+  "question" TEXT NOT NULL,
+  "intent" TEXT NOT NULL,
+  "timesAsked" INTEGER NOT NULL DEFAULT 1,
+  "timestamp" TIMESTAMPTZ NOT NULL
+);
+
+-- 10. Audit Logs Table
+CREATE TABLE IF NOT EXISTS audit_logs (
+  "id" TEXT PRIMARY KEY,
+  "timestamp" TIMESTAMPTZ NOT NULL,
+  "action" TEXT NOT NULL,
+  "actor" TEXT NOT NULL,
+  "role" TEXT NOT NULL,
+  "ipAddress" TEXT NOT NULL,
+  "details" TEXT NOT NULL,
+  "severity" TEXT NOT NULL,
+  "status" TEXT NOT NULL,
+  "payload" TEXT,
+  "stackTrace" TEXT
+);
+
+-- Enable Row Level Security (RLS) on all tables for database security
+ALTER TABLE duka_letu_sync ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE support_tickets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE prompt_versions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE prompt_tests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE knowledge_documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE knowledge_gaps ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+
+-- Create policies to allow public access for demonstration/application reads and writes
+DROP POLICY IF EXISTS "Allow public access" ON duka_letu_sync;
+CREATE POLICY "Allow public access" ON duka_letu_sync FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Allow public access" ON users;
+CREATE POLICY "Allow public access" ON users FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Allow public access" ON conversations;
+CREATE POLICY "Allow public access" ON conversations FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Allow public access" ON messages;
+CREATE POLICY "Allow public access" ON messages FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Allow public access" ON support_tickets;
+CREATE POLICY "Allow public access" ON support_tickets FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Allow public access" ON prompt_versions;
+CREATE POLICY "Allow public access" ON prompt_versions FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Allow public access" ON prompt_tests;
+CREATE POLICY "Allow public access" ON prompt_tests FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Allow public access" ON knowledge_documents;
+CREATE POLICY "Allow public access" ON knowledge_documents FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Allow public access" ON knowledge_gaps;
+CREATE POLICY "Allow public access" ON knowledge_gaps FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Allow public access" ON audit_logs;
+CREATE POLICY "Allow public access" ON audit_logs FOR ALL USING (true);
+`.trim();
 
 export default function DashboardView() {
   const [data, setData] = useState<SystemAnalytics | null>(null);
@@ -45,9 +237,72 @@ export default function DashboardView() {
     }
   };
 
+  const [supabaseStatus, setSupabaseStatus] = useState<any>(null);
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [pullLoading, setPullLoading] = useState(false);
+  const [syncResult, setSyncResult] = useState<{ success?: boolean; message?: string; sqlInstructions?: string } | null>(null);
+  const [copiedSql, setCopiedSql] = useState(false);
+  const [showMasterSql, setShowMasterSql] = useState(false);
+
+  const fetchSupabaseStatus = async () => {
+    try {
+      const res = await fetch('/api/supabase/status');
+      if (res.ok) {
+        const json = await res.json();
+        setSupabaseStatus(json);
+      }
+    } catch (e) {
+      console.error('Failed to load Supabase status:', e);
+    }
+  };
+
+  const handleSync = async () => {
+    setSyncLoading(true);
+    setSyncResult(null);
+    try {
+      const res = await fetch('/api/supabase/sync', { method: 'POST' });
+      const json = await res.json();
+      setSyncResult(json);
+      fetchSupabaseStatus();
+    } catch (e) {
+      console.error('Sync failed:', e);
+      setSyncResult({ success: false, message: 'Failed to contact sync server endpoint.' });
+    } finally {
+      setSyncLoading(false);
+    }
+  };
+
+  const handlePull = async () => {
+    if (!window.confirm("Warning: Restoring from Supabase will overwrite all current local data with the cloud backup. Do you want to continue?")) {
+      return;
+    }
+    setPullLoading(true);
+    setSyncResult(null);
+    try {
+      const res = await fetch('/api/supabase/pull', { method: 'POST' });
+      const json = await res.json();
+      if (json.success) {
+        setSyncResult(json);
+        fetchAnalytics(); // reload stats
+      } else {
+        setSyncResult({ success: false, message: json.message });
+      }
+      fetchSupabaseStatus();
+    } catch (e) {
+      console.error('Pull failed:', e);
+      setSyncResult({ success: false, message: 'Failed to contact sync server endpoint.' });
+    } finally {
+      setPullLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchAnalytics();
-    const interval = setInterval(fetchAnalytics, 10000); // refresh every 10s
+    fetchSupabaseStatus();
+    const interval = setInterval(() => {
+      fetchAnalytics();
+      fetchSupabaseStatus();
+    }, 10000); // refresh every 10s
     return () => clearInterval(interval);
   }, []);
 
@@ -150,6 +405,203 @@ export default function DashboardView() {
             <span>Tokens used: {(data.totalTokens / 1000).toFixed(1)}k</span>
           </div>
         </div>
+      </div>
+
+      {/* Supabase Cloud Synchronization Card */}
+      <div className="bg-[#0F172A] border border-[#1E293B] p-6 rounded-xl mb-8 shadow-xl relative overflow-hidden group">
+        <div className="absolute right-0 top-0 translate-x-3 -translate-y-3 w-32 h-32 bg-cyan-500/5 rounded-full blur-2xl pointer-events-none"></div>
+        
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#1E293B] mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-emerald-950/40 text-emerald-400 rounded-lg border border-emerald-800/30">
+              <Database className="w-5 h-5 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-bold text-white tracking-tight">Supabase Cloud Sync Engine</h3>
+                <span className={`w-2.5 h-2.5 rounded-full ${supabaseStatus?.connected ? 'bg-emerald-500 animate-ping' : 'bg-rose-500'}`} title={supabaseStatus?.connected ? 'Connected' : 'Offline'}></span>
+              </div>
+              <p className="text-xs text-gray-400 mt-0.5">Dual-layer persistent backup & state recovery between local cache and cloud database.</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button 
+              onClick={() => setShowMasterSql(!showMasterSql)}
+              className={`flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-lg border transition-all duration-200 cursor-pointer ${
+                showMasterSql 
+                  ? 'bg-cyan-950/40 text-cyan-400 border-cyan-800/40 shadow-inner' 
+                  : 'bg-[#1E293B] hover:bg-[#2D3748] text-gray-300 border-[#334155]'
+              }`}
+            >
+              <Database className="w-4 h-4" />
+              {showMasterSql ? 'Hide SQL Schema' : 'View SQL Schema'}
+            </button>
+            <button 
+              onClick={handleSync}
+              disabled={syncLoading || pullLoading || !supabaseStatus?.connected}
+              className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:from-gray-800 disabled:to-gray-800 disabled:text-gray-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg border border-emerald-500/20 shadow-md shadow-emerald-950/30 transition-all duration-200 cursor-pointer disabled:cursor-not-allowed"
+            >
+              <UploadCloud className="w-4 h-4" />
+              {syncLoading ? 'Pushing Data...' : 'Push Sync to Cloud'}
+            </button>
+            <button 
+              onClick={handlePull}
+              disabled={syncLoading || pullLoading || !supabaseStatus?.connected}
+              className="flex items-center gap-2 bg-[#1E293B] hover:bg-[#2D3748] disabled:bg-gray-800 disabled:text-gray-500 text-gray-300 text-xs font-bold px-4 py-2.5 rounded-lg border border-[#334155] transition-all duration-200 cursor-pointer disabled:cursor-not-allowed"
+            >
+              <DownloadCloud className="w-4 h-4" />
+              {pullLoading ? 'Restoring...' : 'Restore from Cloud'}
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Status Indicators */}
+          <div className="space-y-4 bg-[#090D16]/60 p-4 rounded-xl border border-[#1E293B]/60">
+            <div>
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Instance URL</span>
+              <span className="text-xs font-mono text-cyan-400 select-all truncate block">
+                {supabaseStatus?.url || 'Fetching...'}
+              </span>
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Connection State</span>
+              <div className="flex items-center gap-2">
+                {supabaseStatus?.connected ? (
+                  <span className="text-xs text-emerald-400 font-semibold bg-emerald-950/30 px-2 py-0.5 rounded border border-emerald-900/30 inline-flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Authenticated & Online
+                  </span>
+                ) : (
+                  <span className="text-xs text-rose-400 font-semibold bg-rose-950/30 px-2 py-0.5 rounded border border-rose-900/30 inline-flex items-center gap-1">
+                    <XCircle className="w-3.5 h-3.5" /> Connection Offline
+                  </span>
+                )}
+              </div>
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Last Synced Backup</span>
+              <span className="text-xs text-gray-300 font-medium">
+                {supabaseStatus?.lastSync 
+                  ? new Date(supabaseStatus.lastSync).toLocaleString() 
+                  : 'No active backups stored in this session'}
+              </span>
+            </div>
+          </div>
+
+          {/* Table Counters */}
+          <div className="bg-[#090D16]/60 p-4 rounded-xl border border-[#1E293B]/60 flex flex-col justify-between">
+            <div>
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-2">Relational DB Inventory</span>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                <div className="flex items-center justify-between text-[11px] text-gray-400 border-b border-[#1E293B]/40 pb-1">
+                  <span>Users:</span>
+                  <span className="font-mono font-bold text-white">{supabaseStatus?.tables?.users || 0}</span>
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-gray-400 border-b border-[#1E293B]/40 pb-1">
+                  <span>Convs:</span>
+                  <span className="font-mono font-bold text-white">{supabaseStatus?.tables?.conversations || 0}</span>
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-gray-400 border-b border-[#1E293B]/40 pb-1">
+                  <span>Messages:</span>
+                  <span className="font-mono font-bold text-white">{supabaseStatus?.tables?.messages || 0}</span>
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-gray-400 border-b border-[#1E293B]/40 pb-1">
+                  <span>Tickets:</span>
+                  <span className="font-mono font-bold text-white">{supabaseStatus?.tables?.tickets || 0}</span>
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-gray-400 border-b border-[#1E293B]/40 pb-1">
+                  <span>Prompts:</span>
+                  <span className="font-mono font-bold text-white">{supabaseStatus?.tables?.prompts || 0}</span>
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-gray-400 border-b border-[#1E293B]/40 pb-1">
+                  <span>Docs:</span>
+                  <span className="font-mono font-bold text-white">{supabaseStatus?.tables?.documents || 0}</span>
+                </div>
+              </div>
+            </div>
+            <div className="text-[10px] text-gray-500 flex items-center justify-between mt-3 pt-2 border-t border-[#1E293B]/40">
+              <span className="flex items-center gap-1">
+                <Database className="w-3 h-3" />
+                <span>All tables auto-sync.</span>
+              </span>
+              <span className="font-mono font-semibold text-cyan-400 bg-cyan-950/20 px-1 py-0.5 rounded border border-cyan-900/30">10 Tables</span>
+            </div>
+          </div>
+
+          {/* Sync Result & Helpers */}
+          <div className="bg-[#090D16]/60 p-4 rounded-xl border border-[#1E293B]/60 flex flex-col justify-between min-h-[140px]">
+            <div>
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Status Logs</span>
+              {syncResult ? (
+                <div className={`p-3 rounded-lg border text-xs leading-normal ${
+                  syncResult.success 
+                    ? 'bg-emerald-950/20 border-emerald-900/30 text-emerald-300' 
+                    : 'bg-rose-950/20 border-rose-900/30 text-rose-300'
+                }`}>
+                  {syncResult.message}
+                </div>
+              ) : supabaseStatus?.errorMessage ? (
+                <div className="p-3 bg-amber-950/20 border border-amber-900/30 text-amber-300 text-xs rounded-lg leading-relaxed">
+                  {supabaseStatus.errorMessage}
+                </div>
+              ) : (
+                <div className="text-xs text-gray-500 italic py-2">
+                  System daemon idle. Select sync push or pull restore action above.
+                </div>
+              )}
+            </div>
+
+            {/* Micro loader */}
+            {(syncLoading || pullLoading) && (
+              <div className="flex items-center gap-2 text-xs text-cyan-400 mt-2">
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                <span>Processing secure ledger pipeline operations...</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Master Schema definition or Missing table SQL instructions */}
+        {(showMasterSql || syncResult?.sqlInstructions) && (
+          <div className="mt-6 bg-[#090D16] border border-cyan-900/30 rounded-xl p-5 relative">
+            <div className="flex items-start justify-between gap-4 mb-3">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-cyan-400" />
+                <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">
+                  {syncResult?.sqlInstructions ? 'Required Database Setup' : 'Master Database Schema definitions'}
+                </span>
+              </div>
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(syncResult?.sqlInstructions || MASTER_SQL_SCHEMA);
+                  setCopiedSql(true);
+                  setTimeout(() => setCopiedSql(false), 2000);
+                }}
+                className="text-xs text-gray-400 hover:text-cyan-400 flex items-center gap-1.5 bg-[#1E293B] px-2.5 py-1.5 rounded-lg border border-[#334155] transition-all duration-150 cursor-pointer"
+              >
+                {copiedSql ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="text-emerald-400 font-semibold">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copy SQL Query</span>
+                  </>
+                )}
+              </button>
+            </div>
+            <p className="text-[11px] text-gray-400 leading-relaxed mb-3">
+              {syncResult?.sqlInstructions 
+                ? 'Your Supabase credentials are valid, but the synchronization tables do not exist yet. Run this schema definition inside your Supabase project\'s SQL Editor:'
+                : 'Run the following SQL commands in your Supabase SQL Editor to create all 10 relational tables in your project. Once created, click "Push Sync to Cloud" to fully seed them:'}
+            </p>
+            <pre className="text-[10px] text-gray-300 font-mono bg-[#05070C] p-3.5 rounded-lg border border-[#1E293B] overflow-x-auto whitespace-pre leading-relaxed shadow-inner max-h-96">
+              {syncResult?.sqlInstructions || MASTER_SQL_SCHEMA}
+            </pre>
+          </div>
+        )}
       </div>
 
       {/* Main Graphs Grid */}

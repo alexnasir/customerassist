@@ -1,5 +1,7 @@
 import fs from 'fs';
 import path from 'path';
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
 import { 
   User, 
   Conversation, 
@@ -8,9 +10,15 @@ import {
   PromptVersion, 
   PromptTest, 
   KnowledgeDocument, 
+  KnowledgeGap,
   SystemAnalytics,
   AuditLog
 } from '../types.js';
+
+dotenv.config();
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
 
 const DB_FILE = path.join(process.cwd(), 'db.json');
 
@@ -24,6 +32,7 @@ interface DatabaseSchema {
   knowledgeDocuments: KnowledgeDocument[];
   analytics: SystemAnalytics;
   auditLogs?: AuditLog[];
+  knowledgeGaps?: KnowledgeGap[];
 }
 
 // Default seeded data
@@ -446,15 +455,18 @@ const INITIAL_DB: DatabaseSchema = {
       severity: 'info',
       status: 'success'
     }
-  ]
+  ],
+  knowledgeGaps: []
 };
 
 class LocalDB {
   private data: DatabaseSchema;
+  private isSyncingToSupabase = false;
 
   constructor() {
     this.data = INITIAL_DB;
     this.load();
+    this.initSupabase();
   }
 
   private load() {
@@ -472,9 +484,121 @@ class LocalDB {
     }
   }
 
-  private save() {
+  private async initSupabase() {
+    if (!supabaseUrl || !supabaseSecretKey) {
+      console.log('Supabase credentials not configured in environment. Operating in offline db.json mode.');
+      return;
+    }
+
+    try {
+      const client = createClient(supabaseUrl, supabaseSecretKey, {
+        auth: { persistSession: false }
+      });
+
+      console.log('Connecting to Supabase... Fetching primary database state...');
+      const { data, error } = await client
+        .from('duka_letu_sync')
+        .select('data')
+        .eq('id', 'database_state')
+        .maybeSingle();
+
+      if (error) {
+        if (error.code === '42P01') {
+          console.log('Supabase sync tables do not exist yet. Using local db.json.');
+        } else {
+          console.error('Failed to query master state from Supabase:', error.message);
+        }
+        return;
+      }
+
+      if (data && data.data) {
+        console.log('Successfully loaded and synchronized state from Supabase Cloud as primary DB!');
+        this.data = data.data;
+        // Save back to local db.json cache to keep restarts rapid
+        try {
+          fs.writeFileSync(DB_FILE, JSON.stringify(this.data, null, 2), 'utf-8');
+        } catch (e) {
+          console.error('Failed to cache pulled Supabase state to db.json:', e);
+        }
+      } else {
+        console.log('No existing state found in Supabase. Back-seeding current default data...');
+        await this.saveToSupabase();
+      }
+    } catch (e) {
+      console.error('Error connecting to Supabase on startup:', e);
+    }
+  }
+
+  public async saveToSupabase() {
+    if (!supabaseUrl || !supabaseSecretKey || this.isSyncingToSupabase) return;
+
+    try {
+      this.isSyncingToSupabase = true;
+      const client = createClient(supabaseUrl, supabaseSecretKey, {
+        auth: { persistSession: false }
+      });
+
+      // 1. Save master state JSON backup
+      const syncPayload = {
+        id: 'database_state',
+        data: this.data,
+        updated_at: new Date().toISOString()
+      };
+
+      const { error: syncErr } = await client
+        .from('duka_letu_sync')
+        .upsert(syncPayload, { onConflict: 'id' });
+
+      if (syncErr) {
+        // If sync table doesn't exist yet, we won't try syncing relational tables
+        if (syncErr.code !== '42P01') {
+          console.error('Supabase background sync backup error:', syncErr.message);
+        }
+        this.isSyncingToSupabase = false;
+        return;
+      }
+
+      // 2. Map and sync all individual relational tables
+      const individualTables = [
+        { name: 'users', key: 'users' },
+        { name: 'conversations', key: 'conversations' },
+        { name: 'messages', key: 'messages' },
+        { name: 'support_tickets', key: 'supportTickets' },
+        { name: 'prompt_versions', key: 'promptVersions' },
+        { name: 'prompt_tests', key: 'promptTests' },
+        { name: 'knowledge_documents', key: 'knowledgeDocuments' },
+        { name: 'knowledge_gaps', key: 'knowledgeGaps' },
+        { name: 'audit_logs', key: 'auditLogs' }
+      ];
+
+      for (const table of individualTables) {
+        const records = (this.data as any)[table.key] || [];
+        if (records.length === 0) continue;
+
+        // Run non-blocking background upserts with safe async/await
+        (async () => {
+          try {
+            const { error } = await client.from(table.name).upsert(records, { onConflict: 'id' });
+            if (error) {
+              console.error(`Background sync failed for table "${table.name}":`, error.message);
+            }
+          } catch (err) {
+            console.error(`Error in background sync for table "${table.name}":`, err);
+          }
+        })();
+      }
+    } catch (err) {
+      console.error('Failed background-sync to Supabase:', err);
+    } finally {
+      this.isSyncingToSupabase = false;
+    }
+  }
+
+  public save() {
     try {
       fs.writeFileSync(DB_FILE, JSON.stringify(this.data, null, 2), 'utf-8');
+      // Non-blocking trigger to persist state in Supabase in real-time!
+      this.saveToSupabase();
     } catch (e) {
       console.error('Failed to write db.json', e);
     }
@@ -671,6 +795,69 @@ class LocalDB {
   clearAuditLogs() {
     this.data.auditLogs = [];
     this.save();
+  }
+
+  // --- Knowledge Gaps ---
+  getKnowledgeGaps() {
+    if (!this.data.knowledgeGaps) {
+      this.data.knowledgeGaps = [];
+    }
+    return this.data.knowledgeGaps;
+  }
+
+  recordKnowledgeGap(question: string, intent: string) {
+    if (!this.data.knowledgeGaps) {
+      this.data.knowledgeGaps = [];
+    }
+    const normalized = question.trim().toLowerCase();
+    const existing = this.data.knowledgeGaps.find(g => g.question.toLowerCase().trim() === normalized);
+    if (existing) {
+      existing.timesAsked += 1;
+      existing.timestamp = new Date().toISOString();
+    } else {
+      const newGap: KnowledgeGap = {
+        id: `gap-${Date.now()}`,
+        question: question.trim(),
+        intent,
+        timesAsked: 1,
+        timestamp: new Date().toISOString()
+      };
+      this.data.knowledgeGaps.push(newGap);
+    }
+    this.save();
+  }
+
+  // --- Customer Memory ---
+  getCustomerMemory(customerId: string, customerName: string) {
+    const previousConvs = this.data.conversations.filter(c => c.customerId === customerId);
+    
+    const recentOrders = [
+      { orderId: 'OMNI-99321', item: 'Leather Running Shoes', status: 'Out for Delivery', date: '2026-06-25', amount: 89.99 },
+      { orderId: 'OMNI-88221', item: 'Cotton Comfort Hoodie', status: 'Delivered', date: '2026-06-10', amount: 45.00 },
+      { orderId: 'OMNI-77110', item: 'Wireless Sport Earbuds', status: 'Delivered', date: '2026-05-20', amount: 59.99 }
+    ];
+
+    const previousTickets = this.data.supportTickets
+      .filter(t => t.conversationId && previousConvs.some(c => c.id === t.conversationId))
+      .map(t => ({
+        id: t.id,
+        category: t.category,
+        priority: t.priority,
+        status: t.status,
+        createdAt: t.createdAt
+      }));
+
+    const previousIntents = previousConvs.map(c => c.intent).filter(Boolean) as string[];
+    const previousSentiments = previousConvs.map(c => c.sentiment).filter(Boolean) as string[];
+
+    return {
+      customerName,
+      languagePreference: previousConvs.length > 0 ? previousConvs[previousConvs.length - 1].language : 'en',
+      recentOrders,
+      previousTickets,
+      previousIntents: previousIntents.slice(-5),
+      previousSentiments: previousSentiments.slice(-5)
+    };
   }
 }
 

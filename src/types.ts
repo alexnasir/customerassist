@@ -12,6 +12,14 @@ export interface User {
   createdAt: string;
 }
 
+export interface ConversationStrategy {
+  strategyType: 'Empathetic De-escalation' | 'Step-by-Step Diagnostic' | 'Direct Resolution' | 'Proactive Clarification' | 'Educational Onboarding' | 'General Guidance';
+  confidenceScore: number;
+  reasoning: string;
+  recommendedTactics: string[];
+  goals: { description: string; achieved: boolean }[];
+}
+
 export type ConversationStatus = 'active' | 'escalated' | 'resolved';
 
 export interface Conversation {
@@ -25,6 +33,18 @@ export interface Conversation {
   feedback?: string;
   createdAt: string;
   lastMessageAt: string;
+  intent?: string;
+  sentiment?: string;
+  overallConfidence?: number;
+  strategy?: ConversationStrategy;
+  customerMemory?: {
+    customerName: string;
+    languagePreference: string;
+    recentOrders: { orderId: string; item: string; status: string; date: string; amount: number }[];
+    previousTickets: { id: string; category: string; priority: string; status: string; createdAt: string }[];
+    previousIntents: string[];
+    previousSentiments: string[];
+  };
 }
 
 export interface Message {
@@ -37,6 +57,26 @@ export interface Message {
   audioUrl?: string; // Base64 audio or direct URL
   latencyMs?: number;
   timestamp: string;
+  intent?: string;
+  intentConfidence?: number;
+  sentiment?: string;
+  sentimentConfidence?: number;
+  routedAgent?: string;
+  confidenceScore?: number;
+  toolsCalled?: { name: string; args: any; result: any }[];
+  strategy?: ConversationStrategy;
+  evaluation?: {
+    accuracy: number;
+    relevance: number;
+    tone: number;
+    completeness: number;
+    hallucinationRisk: number;
+    accuracy_score?: number;
+    tone_score?: number;
+    clarity_score?: number;
+    hallucination_risk?: number;
+    overall_quality?: number;
+  };
 }
 
 export type Priority = 'low' | 'medium' | 'high';
@@ -98,6 +138,14 @@ export interface KnowledgeDocument {
   category: string;
   chunkCount: number;
   createdAt: string;
+}
+
+export interface KnowledgeGap {
+  id: string;
+  question: string;
+  intent: string;
+  timesAsked: number;
+  timestamp: string;
 }
 
 export interface SystemAnalytics {

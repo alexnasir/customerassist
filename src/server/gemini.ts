@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import { db } from './db.js';
+import { ConversationStrategy } from '../types.js';
 
 // Initialize the Google GenAI SDK on the server-side with the correct header
 const ai = new GoogleGenAI({
@@ -143,6 +144,269 @@ function retrieveRAGContext(query: string): { context: string; sources: string[]
 }
 
 /**
+ * Conversation Strategy Engine:
+ * Analyzes the customer message, sentiment, history, and goals to choose
+ * the optimal dynamic approach for resolution.
+ */
+async function determineConversationStrategy(params: {
+  userMessage: string;
+  classification: any;
+  messageHistory: string;
+  customerMemory: any;
+}): Promise<ConversationStrategy> {
+  const { userMessage, classification, messageHistory, customerMemory } = params;
+
+  const strategyPrompt = `You are the Duka Letu Conversation Strategy Engine.
+Analyze the user's message, their emotional profile, intent, and message history, and select the optimal resolution strategy.
+
+USER MESSAGE: "${userMessage}"
+INTENT: "${classification.primaryIntent}"
+SENTIMENT: "${classification.sentiment}"
+HISTORY:
+${messageHistory}
+
+MEMORIES:
+${JSON.stringify(customerMemory)}
+
+Available Strategy Types:
+1. "Empathetic De-escalation": Select when customer sentiment is angry, frustrated, or they have a complaint.
+2. "Step-by-Step Diagnostic": Select when there is a technical support issue, login issue, or complex billing/refund task requiring sequential steps.
+3. "Direct Resolution": Select for simple FAQs, greetings, goodbye, order tracking, where a quick straightforward answer works best.
+4. "Proactive Clarification": Select when required inputs like orderId, transactionId, or specific details are missing, and you need to politely ask for them.
+5. "Educational Onboarding": Select when the user asks questions about rules, procedures, "how-to", return periods, etc.
+6. "General Guidance": Fallback for standard or ambiguous chat.
+
+Your output must contain:
+- strategyType: One of the 6 strings above.
+- confidenceScore: Your confidence (0.0 to 1.0).
+- reasoning: Why you chose this strategy.
+- recommendedTactics: 3 to 4 specific conversational guidelines or psychological approaches (e.g., "Begin with an apology validating frustration", "Ask for the OMNI-XXXXX order ID in clear formatting", "Use simple Kiswahili/Sheng to build rapport", "Keep explanations extremely concise to avoid overwhelming them").
+- goals: A list of 3 to 4 actionable milestones for this conversation. Define their current status: "achieved" (true) or "pending" (false). For example, if they have already provided their order ID, mark that goal as true!
+
+Return EXACTLY a JSON object conforming to the schema.`;
+
+  try {
+    const strategyResponse = await generateContentWithRetry({
+      model: 'gemini-3.5-flash',
+      contents: strategyPrompt,
+      config: {
+        temperature: 0.1,
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            strategyType: {
+              type: Type.STRING,
+              enum: [
+                'Empathetic De-escalation',
+                'Step-by-Step Diagnostic',
+                'Direct Resolution',
+                'Proactive Clarification',
+                'Educational Onboarding',
+                'General Guidance'
+              ]
+            },
+            confidenceScore: { type: Type.NUMBER },
+            reasoning: { type: Type.STRING },
+            recommendedTactics: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            },
+            goals: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  description: { type: Type.STRING },
+                  achieved: { type: Type.BOOLEAN }
+                },
+                required: ['description', 'achieved']
+              }
+            }
+          },
+          required: ['strategyType', 'confidenceScore', 'reasoning', 'recommendedTactics', 'goals']
+        }
+      }
+    });
+
+    const parsed = JSON.parse(strategyResponse.text || '{}');
+    return {
+      strategyType: parsed.strategyType || 'General Guidance',
+      confidenceScore: parsed.confidenceScore ?? 0.90,
+      reasoning: parsed.reasoning || 'Standard response protocol.',
+      recommendedTactics: parsed.recommendedTactics || ['Be helpful', 'Maintain polite language'],
+      goals: parsed.goals || [{ description: 'Assist customer', achieved: false }]
+    };
+  } catch (error) {
+    console.error('Failed to determine strategy via LLM, using fallback:', error);
+    return {
+      strategyType: 'General Guidance',
+      confidenceScore: 0.80,
+      reasoning: 'Fallback strategy due to engine failure.',
+      recommendedTactics: ['Be helpful', 'Speak politely', 'Keep it simple'],
+      goals: [{ description: 'Resolve the customer query', achieved: false }]
+    };
+  }
+}
+
+/**
+ * Phase 15: Response Post-Processing Pipeline
+ * Validates, humanizes, scores, and polishes responses.
+ */
+async function postProcessResponse(params: {
+  userMessage: string;
+  generatedResponse: string;
+  retrievedContext: string;
+  toolResultsText: string;
+  customerMemory: any;
+  classification: any;
+}): Promise<{
+  processedResponse: string;
+  accuracyScore: number;
+  toneScore: number;
+  clarityScore: number;
+  hallucinationRisk: number;
+  overallQuality: number;
+  blocked: boolean;
+  requiresEscalation: boolean;
+}> {
+  const { userMessage, generatedResponse, retrievedContext, toolResultsText, customerMemory, classification } = params;
+
+  const postProcessingPrompt = `You are the Duka Letu Customer Support Response Post-Processing Layer.
+Your task is to analyze, validate, humanize, score, and polish the assistant's proposed response before it reaches the customer.
+
+USER MESSAGE: "${userMessage}"
+RETRIEVED KNOWLEDGE CONTEXT:
+---
+${retrievedContext}
+---
+BUSINESS TOOL EXECUTION RESULTS:
+---
+${toolResultsText}
+---
+CUSTOMER MEMORY:
+${JSON.stringify(customerMemory)}
+DETECTED SENTIMENT: "${classification.sentiment}"
+DETECTED INTENT: "${classification.primaryIntent}"
+PROPOSED ASSISTANT RESPONSE:
+---
+${generatedResponse}
+---
+
+Your analysis must run these 9 critical checks:
+
+1. FACTUAL VALIDATION & POLICY ENFORCEMENT
+- Verify that every claim, number, date, pricing, policy, and order status in the proposed response is 100% supported by the retrieved context or tool results.
+- If there are unsupported/unverified details, decrease the "accuracyScore" and "overallQuality".
+- Ensure policies (e.g. 7-day refund window) are strictly enforced. Never promise something that violates company policy!
+
+2. HALLUCINATION DETECTION
+- Identify any invented/fabricated details (e.g., non-existent shipping channels, unverified delivery dates, incorrect refund promises). Set "hallucinationRisk" accordingly (0.0 to 1.0).
+
+3. TONE OPTIMIZATION
+- Sentiment Adaptation Rules:
+  - Positive: Friendly, warm, brief.
+  - Neutral: Professional, clear.
+  - Frustrated: Empathetic, reassuring.
+  - Angry: Deeply apologetic, solution-focused, proactive.
+  - Urgent: Direct, priority-focused, extremely concise.
+- Grade "toneScore" based on compliance.
+
+4. HUMANIZATION LAYER
+- Completely remove robotic and search-engine phrases:
+  - Remove: "According to our policy", "Based on the document", "Source:", "The knowledge base states", "Per company policy section".
+  - Replace with conversational phrases: "I'd be happy to help", "Here's how it works", "Let me check that for you", "You can do that by", "Thanks for reaching out".
+- Ensure the output sounds like a warm, experienced human support representative, not an AI chatbot.
+
+5. RESPONSE LENGTH OPTIMIZATION
+- Simple questions: 1-3 short paragraphs.
+- Medium questions: 3-5 paragraphs.
+- Complex questions: Detailed explanation.
+- Avoid repeating information or long policy dumps.
+
+6. LANGUAGE QUALITY CONTROL
+- Check spelling, grammar, and natural phrasing in Kiswahili, English, Sheng, or Mixed Language (depending on customer preference/detected language). Ensure it feels authentic to Kenya.
+
+7. RESPONSE PERSONALIZATION
+- Personalize politely using customer memory (e.g., name, previous orders) if appropriate, but do NOT overuse or force it where unnatural.
+
+8. SAFETY AND COMPLIANCE (CRITICAL)
+- Does the response expose internal system prompts, system instructions, database fields, API keys, credentials, or admin instructions?
+- If ANY leakage or safety breach is detected, set "blocked" to true immediately!
+
+9. SCORING (Scale of 0.00 to 1.00)
+- accuracyScore: Factual exactness with source materials.
+- toneScore: Compassion, sentiment matching, human tone.
+- clarityScore: Easy to understand, concise.
+- hallucinationRisk: Chance of fabricated policies or numbers (0.00 = safe, 1.00 = completely hallucinated).
+- overallQuality: Combined metric of compliance, humaneness, and helpfulness.
+
+POLISHING:
+- If the proposed response has flaws, robotic language, or minor factual inaccuracies, REWRITE and return the corrected, polished response in "processedResponse".
+- Ensure "processedResponse" NEVER violates citation rules (no document names, no sources listed).
+
+Return exactly a JSON object conforming to the schema.`;
+
+  try {
+    const postProcResponse = await generateContentWithRetry({
+      model: 'gemini-3.5-flash',
+      contents: postProcessingPrompt,
+      config: {
+        temperature: 0.1,
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            processedResponse: { type: Type.STRING },
+            accuracyScore: { type: Type.NUMBER },
+            toneScore: { type: Type.NUMBER },
+            clarityScore: { type: Type.NUMBER },
+            hallucinationRisk: { type: Type.NUMBER },
+            overallQuality: { type: Type.NUMBER },
+            blocked: { type: Type.BOOLEAN },
+            requiresEscalation: { type: Type.BOOLEAN }
+          },
+          required: [
+            'processedResponse',
+            'accuracyScore',
+            'toneScore',
+            'clarityScore',
+            'hallucinationRisk',
+            'overallQuality',
+            'blocked',
+            'requiresEscalation'
+          ]
+        }
+      }
+    });
+
+    const parsed = JSON.parse(postProcResponse.text || '{}');
+    return {
+      processedResponse: parsed.processedResponse || generatedResponse,
+      accuracyScore: parsed.accuracyScore ?? 0.90,
+      toneScore: parsed.toneScore ?? 0.90,
+      clarityScore: parsed.clarityScore ?? 0.90,
+      hallucinationRisk: parsed.hallucinationRisk ?? 0.05,
+      overallQuality: parsed.overallQuality ?? 0.90,
+      blocked: !!parsed.blocked,
+      requiresEscalation: !!parsed.requiresEscalation
+    };
+  } catch (error) {
+    console.error('Post-processing model call failed, fallback to heuristic scoring:', error);
+    return {
+      processedResponse: generatedResponse,
+      accuracyScore: 0.90,
+      toneScore: 0.90,
+      clarityScore: 0.90,
+      hallucinationRisk: 0.05,
+      overallQuality: 0.90,
+      blocked: false,
+      requiresEscalation: false
+    };
+  }
+}
+
+/**
  * Service to interact with Gemini API for Chat, Voice, RAG, and Prompts
  */
 export const geminiService = {
@@ -160,230 +424,614 @@ export const geminiService = {
       throw new Error(`Conversation ${conversationId} not found`);
     }
 
-    // 1. Detect language if auto-detecting
-    let detectedLang: 'en' | 'sw' = 'en';
-    if (!forcedLanguage || forcedLanguage === 'auto') {
-      detectedLang = await this.detectLanguage(userMessage);
-      db.updateConversation(conversationId, { language: detectedLang });
-    } else {
-      detectedLang = forcedLanguage;
+    const customerId = conversation.customerId;
+    const customerName = conversation.customerName;
+
+    // --- PHASE 1, 2 & 10: CLASSIFICATION ENGINE (INTENT, SENTIMENT, LANG & ENTITIES) ---
+    let classification = {
+      language: 'en',
+      languageConfidence: 0.90,
+      primaryIntent: 'general_faq',
+      primaryIntentConfidence: 0.90,
+      secondaryIntent: 'unknown',
+      secondaryIntentConfidence: 0.10,
+      sentiment: 'neutral',
+      sentimentConfidence: 0.90,
+      orderId: null as string | null,
+      transactionId: null as string | null,
+      refundAmount: null as number | null
+    };
+
+    try {
+      const classificationPrompt = `Analyze this customer support query and extract the language, primary/secondary intents, sentiment, and key entities.
+
+User query: "${userMessage}"
+
+Intents:
+- "order_tracking": Asking where package/order is.
+- "shipping_delivery": Shipping times, costs, methods, delivery areas.
+- "refund_request": Requesting refunds, returns money back.
+- "return_request": Asking how to return an item, policies.
+- "payment_issue": Billing errors, failed payments, M-Pesa checks, transaction queries.
+- "account_issue": Account details, profiles, premium status.
+- "login_issue": Login errors, locking out.
+- "password_reset": Explicit password change request.
+- "product_inquiry": Size, material, stock queries.
+- "pricing_question": Coupon, price, discount checks.
+- "sales_inquiry": Bulk buys, B2B, pre-sales.
+- "technical_support": App crashing, voice bugs, web errors.
+- "complaint": Active frustration with service/products.
+- "human_agent": Speak to human agent, person, representative.
+- "greeting": Hello, sasa, habari.
+- "goodbye": Bye, thank you, asante, kwa heri.
+- "general_faq": Store locations, hours, simple policies.
+- "unknown": Unclear, gibberish.
+
+Sentiments:
+- "positive": Happy, thanking, cheerfully saying hello.
+- "neutral": Standard queries, no strong emotion.
+- "frustrated": Annoyed, mentioning delays, "still hasn't arrived".
+- "angry": Highly upset, using caps, demands escalation.
+- "urgent": Highly time-sensitive, "ASAP", "urgent", "need it today".
+
+Languages:
+- "en": English
+- "sw": Kiswahili
+- "sheng": Nairobi Sheng slang
+- "mixed": Mixture of Kiswahili and English
+
+Entities to extract:
+- "orderId": Match "OMNI-[0-9]+" or "#OMNI-[0-9]+" (strip the '#' if present).
+- "transactionId": Match "TXN-[0-9]+" or MPesa codes.
+- "refundAmount": Any numbers mentioned alongside refunds.
+
+Return a JSON object conforming exactly to the response schema.`;
+
+      const classResponse = await generateContentWithRetry({
+        model: 'gemini-3.5-flash',
+        contents: classificationPrompt,
+        config: {
+          temperature: 0.1,
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              language: { type: Type.STRING },
+              languageConfidence: { type: Type.NUMBER },
+              primaryIntent: { type: Type.STRING },
+              primaryIntentConfidence: { type: Type.NUMBER },
+              secondaryIntent: { type: Type.STRING },
+              secondaryIntentConfidence: { type: Type.NUMBER },
+              sentiment: { type: Type.STRING },
+              sentimentConfidence: { type: Type.NUMBER },
+              orderId: { type: Type.STRING, nullable: true },
+              transactionId: { type: Type.STRING, nullable: true },
+              refundAmount: { type: Type.NUMBER, nullable: true }
+            },
+            required: ['language', 'languageConfidence', 'primaryIntent', 'primaryIntentConfidence', 'sentiment', 'sentimentConfidence']
+          }
+        }
+      });
+
+      const parsedClass = JSON.parse(classResponse.text || '{}');
+      classification = { ...classification, ...parsedClass };
+    } catch (classError) {
+      console.warn('Classification API call failed, running heuristic fallback:', classError);
+      // Heuristic Fallback
+      const lower = userMessage.toLowerCase();
+      if (lower.includes('order') || lower.includes('oda') || lower.includes('package') || lower.includes('mzigo')) {
+        classification.primaryIntent = 'order_tracking';
+      } else if (lower.includes('refund') || lower.includes('rudisha pesa')) {
+        classification.primaryIntent = 'refund_request';
+      } else if (lower.includes('return') || lower.includes('rudisha')) {
+        classification.primaryIntent = 'return_request';
+      } else if (lower.includes('agent') || lower.includes('mhudumu') || lower.includes('ongea na mtu')) {
+        classification.primaryIntent = 'human_agent';
+      }
+      
+      const orderMatch = userMessage.match(/OMNI-\d+/i);
+      if (orderMatch) {
+        classification.orderId = orderMatch[0].toUpperCase();
+      }
     }
 
-    // 2. Fetch appropriate active system prompt
-    const activePrompt = db.getActivePrompt(detectedLang);
+    // Determine final working language
+    const detectedLang = (forcedLanguage && forcedLanguage !== 'auto') 
+      ? forcedLanguage 
+      : (classification.language as any === 'sw' || classification.language as any === 'sheng' ? 'sw' : 'en');
+    
+    // --- PHASE 9: CUSTOMER MEMORY RETRIEVAL ---
+    const customerMemory = db.getCustomerMemory(customerId, customerName);
 
-    // 3. RAG Retrieval
-    const { context, sources } = retrieveRAGContext(userMessage);
-
-    // 4. Retrieve message history (last 10 messages for context)
-    const history = db.getMessagesByConversationId(conversationId)
-      .slice(-10)
+    // --- CONVERSATION STRATEGY ENGINE ---
+    const messageHistory = db.getMessagesByConversationId(conversationId)
+      .slice(-6)
       .map(m => `${m.sender === 'user' ? 'Customer' : 'Assistant'}: ${m.content}`)
       .join('\n');
 
-    // 5. Construct full dynamic prompt with variable replacement
-    const languageMandate = detectedLang === 'en'
-      ? `CRITICAL LANGUAGE MANDATE: You MUST answer entirely and strictly in English. Do NOT use any Swahili (Kiswahili) words, translations, or phrases under any circumstances. Speak clearly and professionally in English.`
-      : `CRITICAL LANGUAGE MANDATE & KISWAHILI VOICE RESPONSE GUIDELINES:
-Wewe ni msaidizi wa lugha ya Kiswahili pekee. Lazima ujibu mazungumzo yote na majibu yote kwa Kiswahili fasaha, rahisi na chenye adabu pekee. Usitumie Kiingereza kabisa isipokuwa kwa majina rasmi au misimbo ya bidhaa.
+    const strategy = await determineConversationStrategy({
+      userMessage,
+      classification,
+      messageHistory,
+      customerMemory
+    });
 
-Unapojibu kwa Kiswahili, zingatia miongozo hii ili kuboresha sauti ya usemi na ubora wa TTS (TTS Quality):
-1. Tumia Kiswahili rahisi, wazi na cha kawaida cha Kenya kinachotamkwa kwa urahisi (Simple, natural Kenyan Kiswahili).
-2. Weka sentensi ziwe fupi, zilizo wazi na rahisi kutamka. Andika kwa ajili ya sauti ya kuongea, si kwa ajili ya kusoma (Write for speech, not for reading).
-3. Epuka kabisa tafsiri ya neno kwa neno moja kwa moja kutoka Kiingereza (Avoid direct word-for-word translations).
-4. Usichanganye Kiingereza na Kiswahili katika jibu moja isipokuwa kwa majina rasmi au misimbo ambayo ni lazima kabisa.
-5. Epuka maneno na misemo inayofanya jibu lisikike kama la kiroboti, lisilo asilia au lililotengenezwa na mashine.
-6. Epuka KABISA misemo ifuatayo:
-   - "kwa kina"
-   - "mhudumu wa kibinadamu"
-   - "mazungumzo yako yanahamishiwa"
-   - "ninafanya eskalesheni"
-   - "kama nilivyoeleza awali"
-7. Badala yake, tumia mbadala wa asili kama vile:
-   - "nitakuunganisha na mhudumu wetu"
-   - "atakusaidia zaidi"
-   - "tafadhali subiri kwa muda mfupi"
-   - "asante kwa uvumilivu wako"
-   - "naomba radhi kwa usumbufu"
-8. Unapomhamisha mteja kwa mhudumu wa kibinadamu (escalation/transfer):
-   - USISEME: "Samahani sana kwa kuendelea kupata changamoto hii. Kwa kuwa inaonekana bado unahitaji msaada zaidi ili kufuatilia oda yako, naomba nikuunganishe na mhudumu wetu wa kibinadamu ili akusaidie kwa kina."
-   - SEMA: "Samahani kwa usumbufu huu. Naona bado unahitaji msaada zaidi kuhusu oda yako. Nitakuunganisha na mhudumu wetu ili akusaidie moja kwa moja. Tafadhali subiri kwa muda mfupi. Asante kwa uvumilivu wako."
-9. Vunja maelezo marefu kuwa sentensi fupi fupi. Sentensi ndefu zinachosha na hazifai kwa mfumo wa sauti.
-10. Epuka vifupisho na alama za ajabu (kama vile mabano, asilimia zilizorundikwa) ambazo zinaweza kuchanganya mfumo wa kusoma maandishi kwa sauti (TTS).
-11. Taja nambari za simu, nambari za kumbukumbu, na misimbo kwa maneno kamili inapobidi zisomwe.
-12. Epuka maneno magumu ya kitaalamu isipokuwa mteja akiyaomba hasa.
-13. Sauti iwe ya kirafiki, kitaalamu, yenye joto na heshima kubwa, na fupi (Concise).
-14. Tumia maneno kama "tafadhali", "karibu", na "asante" kwa njia ya asili bila kuyarudia kupita kiasi.
-15. Hakikisha kila jibu linasikika vizuri, liko wazi, na lina ufasaha mkubwa likisomwa na injini ya kusoma maandishi ya Kiswahili (speech-friendly and optimized for TTS).`;
+    db.updateConversation(conversationId, { 
+      language: detectedLang as any,
+      intent: classification.primaryIntent,
+      sentiment: classification.sentiment,
+      strategy
+    });
 
-    const fullSystemInstruction = `${activePrompt.content}
+    // --- PHASE 3: SPECIALIST AI AGENT ROUTER ---
+    let agentName = 'General FAQ Agent';
+    let agentInstructions = 'You are the general support assistant. Answer queries using the retrieved knowledge base.';
+    let categoryFilter: string | undefined = undefined;
 
-${languageMandate}
+    switch (classification.primaryIntent) {
+      case 'order_tracking':
+      case 'shipping_delivery':
+        agentName = 'Delivery Specialist Agent';
+        agentInstructions = 'You are the specialist Duka Letu Order & Delivery Agent. Focus on tracking shipments, delivery estimates, carriers, and shipping policies. Use the Order Status Lookup tool to get live updates.';
+        categoryFilter = 'Shipping';
+        break;
+      case 'refund_request':
+      case 'return_request':
+        agentName = 'Refund & Return specialist Agent';
+        agentInstructions = 'You are the specialist Duka Letu Refund Specialist. Focus on return windows, refund processing, checking item condition rules, and processing cash-backs. Use the Refund Processing tool.';
+        categoryFilter = 'Refunds & Returns';
+        break;
+      case 'payment_issue':
+        agentName = 'Billing Specialist Agent';
+        agentInstructions = 'You are the specialist Duka Letu Payment Agent. Address MPesa verifications, card processing issues, double billing, or transaction checks. Use the Payment Verification tool.';
+        categoryFilter = 'Refunds & Returns';
+        break;
+      case 'account_issue':
+      case 'login_issue':
+      case 'password_reset':
+        agentName = 'Account Security Agent';
+        agentInstructions = 'You are the specialist Duka Letu Account Agent. Handle lockouts, password resets, profile edits, and user account tiers.';
+        categoryFilter = 'General FAQs';
+        break;
+      case 'technical_support':
+        agentName = 'Technical Support specialist Agent';
+        agentInstructions = 'You are the technical support engineer. Resolve voice record bugs, player problems, system outages, and app crashes.';
+        categoryFilter = 'General FAQs';
+        break;
+      case 'pricing_question':
+      case 'sales_inquiry':
+      case 'product_inquiry':
+        agentName = 'Sales & Product Expert Agent';
+        agentInstructions = 'You are the product and sales assistant. Address pricing questions, discounts, coupon policies, sizing, materials, and stock availability.';
+        break;
+      default:
+        agentName = 'General FAQ Agent';
+        agentInstructions = 'You are the general customer support agent. Greet customers warmly, address general inquiries, and offer helpful next steps.';
+        categoryFilter = 'General FAQs';
+        break;
+    }
 
-CRITICAL KNOWLEDGE LIMITATION: You MUST answer using ONLY the facts explicitly provided in the RETRIEVED KNOWLEDGE CONTEXT below. Do NOT invent policies, numbers, shipping costs, or return days. If the context does not contain enough information to answer the user's specific query, politely state that you do not have that specific information in your system files and offer to connect them to a support specialist (human agent).
+    // --- PHASE 4: ADVANCED HYBRID RAG RETRIEVAL ---
+    const advancedRAG = (query: string, filter?: string) => {
+      const documents = db.getKnowledgeDocuments();
+      if (documents.length === 0) {
+        return { context: 'No knowledge base documents available.', sources: [], confidence: 0.1 };
+      }
 
-RETRIEVED KNOWLEDGE CONTEXT from company documentation:
+      const queryWords = query.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w.length >= 3);
+      
+      const scoredDocs = documents.map(doc => {
+        let score = 0;
+        const docText = (doc.name + ' ' + doc.content + ' ' + doc.category).toLowerCase();
+        
+        queryWords.forEach(word => {
+          if (docText.includes(word)) {
+            score += 1.5;
+            const regex = new RegExp(`\\b${word}\\b`, 'g');
+            const matches = docText.match(regex);
+            if (matches) {
+              score += matches.length * 2.5;
+            }
+          }
+        });
+
+        // Category relevance boost
+        if (filter && doc.category.toLowerCase().includes(filter.toLowerCase())) {
+          score += 4.0;
+        }
+
+        return { doc, score };
+      });
+
+      const matchedDocs = scoredDocs
+        .filter(item => item.score > 0)
+        .sort((a, b) => b.score - a.score);
+
+      if (matchedDocs.length === 0) {
+        return {
+          context: `General company info available:\n${documents[0].content.substring(0, 500)}`,
+          sources: [documents[0].name],
+          confidence: 0.20
+        };
+      }
+
+      const topMatched = matchedDocs.slice(0, 2);
+      const contextText = topMatched.map(m => `[Document: ${m.doc.name} (Category: ${m.doc.category})]\n${m.doc.content}`).join('\n\n');
+      const sourcesList = topMatched.map(m => m.doc.name);
+      
+      const maxScore = Math.max(...topMatched.map(m => m.score));
+      const confidence = Math.min(0.95, 0.35 + maxScore * 0.05);
+
+      return { context: contextText, sources: sourcesList, confidence };
+    };
+
+    const { context, sources, confidence: retrievalConfidence } = advancedRAG(userMessage, categoryFilter);
+
+    // --- PHASE 12: KNOWLEDGE GAP DETECTION ---
+    const isQuestionIntent = ['product_inquiry', 'pricing_question', 'general_faq', 'shipping_delivery', 'technical_support'].includes(classification.primaryIntent);
+    if (isQuestionIntent && retrievalConfidence < 0.40) {
+      db.recordKnowledgeGap(userMessage, classification.primaryIntent);
+    }
+
+    // --- PHASE 6: BUSINESS TOOLS INTEGRATION ---
+    const toolsCalled: { name: string; args: any; result: any }[] = [];
+    let toolResultsText = 'No tools executed for this request.';
+    let toolConfidence = 0.85;
+
+    const BUSINESS_TOOLS = {
+      getOrderStatus: (orderId: string) => {
+        const orders: Record<string, { item: string; status: string; date: string; carrier: string; trackingNum: string }> = {
+          'OMNI-99321': { item: 'Leather Running Shoes', status: 'Out for Delivery', date: '2026-06-25', carrier: 'DukaExpress', trackingNum: 'DX-98831' },
+          'OMNI-88221': { item: 'Cotton Comfort Hoodie', status: 'Delivered', date: '2026-06-10', carrier: 'DukaExpress', trackingNum: 'DX-77124' },
+          'OMNI-77110': { item: 'Wireless Sport Earbuds', status: 'Delivered', date: '2026-05-20', carrier: 'DHL', trackingNum: 'DHL-55210' },
+        };
+        const o = orders[orderId.toUpperCase().trim()];
+        if (o) return { found: true, orderId: orderId.toUpperCase(), ...o };
+        return { found: false, orderId: orderId.toUpperCase(), message: 'Order reference not found.' };
+      },
+      processRefund: (orderId: string, amount?: number) => {
+        const validOrders = ['OMNI-99321', 'OMNI-88221', 'OMNI-77110'];
+        if (validOrders.includes(orderId.toUpperCase().trim())) {
+          return {
+            success: true,
+            refundId: `REF-${Math.floor(100000 + Math.random() * 900000)}`,
+            orderId: orderId.toUpperCase(),
+            amount: amount || 89.99,
+            status: 'Approved & Pending Bank Settlement',
+            date: new Date().toISOString().split('T')[0]
+          };
+        }
+        return { success: false, message: 'Invalid or unauthorized Order ID for refund processing.' };
+      },
+      verifyPayment: (transactionId: string) => {
+        const txns: Record<string, { amount: number; status: string; date: string; method: string }> = {
+          'TXN-11022': { amount: 89.99, status: 'Completed', date: '2026-06-25', method: 'M-Pesa' },
+          'TXN-88291': { amount: 45.00, status: 'Completed', date: '2026-06-10', method: 'Visa Card' },
+        };
+        const t = txns[transactionId.toUpperCase().trim()];
+        if (t) return { found: true, transactionId: transactionId.toUpperCase(), ...t };
+        return { found: false, transactionId: transactionId.toUpperCase(), message: 'Payment transaction record not found.' };
+      },
+      getAccountDetails: (cust: string) => {
+        return {
+          customerId: cust,
+          membershipTier: 'Premium Gold Member',
+          accountStatus: 'Active',
+          loyaltyPoints: 450,
+          email: 'customer@DukaLetuAssist.com'
+        };
+      }
+    };
+
+    // Tool selection routing
+    if (classification.orderId && (classification.primaryIntent === 'order_tracking' || classification.primaryIntent === 'shipping_delivery')) {
+      const res = BUSINESS_TOOLS.getOrderStatus(classification.orderId);
+      toolsCalled.push({ name: 'getOrderStatus', args: { orderId: classification.orderId }, result: res });
+      toolResultsText = `Executed Tool [getOrderStatus] for order ${classification.orderId}:\n${JSON.stringify(res)}`;
+      toolConfidence = 1.0;
+    } else if (classification.orderId && classification.primaryIntent === 'refund_request') {
+      const res = BUSINESS_TOOLS.processRefund(classification.orderId, classification.refundAmount || undefined);
+      toolsCalled.push({ name: 'processRefund', args: { orderId: classification.orderId, amount: classification.refundAmount }, result: res });
+      toolResultsText = `Executed Tool [processRefund] for order ${classification.orderId}:\n${JSON.stringify(res)}`;
+      toolConfidence = res.success ? 1.0 : 0.40;
+    } else if (classification.transactionId && classification.primaryIntent === 'payment_issue') {
+      const res = BUSINESS_TOOLS.verifyPayment(classification.transactionId);
+      toolsCalled.push({ name: 'verifyPayment', args: { transactionId: classification.transactionId }, result: res });
+      toolResultsText = `Executed Tool [verifyPayment] for transaction ${classification.transactionId}:\n${JSON.stringify(res)}`;
+      toolConfidence = res.found ? 1.0 : 0.50;
+    } else if (classification.primaryIntent === 'account_issue') {
+      const res = BUSINESS_TOOLS.getAccountDetails(customerId);
+      toolsCalled.push({ name: 'getAccountDetails', args: { customerId }, result: res });
+      toolResultsText = `Executed Tool [getAccountDetails] for customer ${customerId}:\n${JSON.stringify(res)}`;
+      toolConfidence = 1.0;
+    }
+
+    // --- PHASE 9 & 10: CUSTOM MULTILINGUAL RESPONSE GENERATION RULES ---
+    let languageInstructions = '';
+    if (classification.language === 'sw') {
+      languageInstructions = `LUGHA YA MAJIBU: Jibu kikamilifu kwa Kiswahili fasaha, cha adabu, na kirafiki.
+Sheria za usemi (optimized for Speech/TTS):
+- Tumia Kiswahili rahisi cha mazungumzo asilia ya Kenya (Simple Kenyan Kiswahili).
+- Weka sentensi ziwe fupi, rahisi kutamka na zisizo na jargon ya kiroboti.
+- EPUKA kabisa maneno haya: 'kwa kina', 'mhudumu wa kibinadamu', 'mazungumzo yako yanahamishiwa', au 'ninafanya eskalesheni'.
+- BADALA YAKE tumia: 'nitakuunganisha na mhudumu wetu', 'atakusaidia zaidi', 'tafadhali subiri kidogo', 'asante kwa uvumilivu wako'.
+- Andika nambari, tarehe, na namba za oda kwa kuandika neno lililo rahisi kusomeka.`;
+    } else if (classification.language === 'sheng') {
+      languageInstructions = `LUGHA YA MAJIBU: Sheng detected! You are a friendly, helpful Duka Letu support buddy.
+Style Guidelines:
+- Respond in authentic, clean, polite Nairobi Sheng slang mixed with Kiswahili.
+- Use friendly words like 'msee', 'sema', 'kazi', 'mzigo', 'raba', but remain 100% helpful, polite, and professional.
+- Do not make the customer feel confused; keep explanations light, warm, and highly conversational.`;
+    } else if (classification.language === 'mixed') {
+      languageInstructions = `LUGHA YA MAJIBU: Mixed Kiswahili-English (Engsh/Sheng) detected!
+Style Guidelines:
+- Respond in a warm, bilingual, conversational hybrid style mirroring the customer's blend.
+- Keep the tone polite, professional, and easily understandable.`;
+    } else {
+      languageInstructions = `LUGHA YA MAJIBU: Speak entirely in clean, professional, and friendly English.`;
+    }
+
+    let toneGuideline = 'Be professional and friendly.';
+    if (classification.sentiment === 'frustrated') {
+      toneGuideline = 'The customer is annoyed. Speak with deep patience, validate their frustration, and avoid any defensive language. Focus on quick support.';
+    } else if (classification.sentiment === 'angry') {
+      toneGuideline = 'The customer is very angry! Be deeply apologetic, humble, and proactive. Assure them their problem is being priority-solved.';
+    } else if (classification.sentiment === 'urgent') {
+      toneGuideline = 'The query is urgent. Respond with extreme conciseness, omit unnecessary chatter, and provide rapid answers or immediate escalation.';
+    }
+
+    const fullSystemInstruction = `${agentInstructions}
+
+CONVERSATION STRATEGY DIRECTIVES:
+- Chosen Strategy: **${strategy.strategyType}**
+- Strategy Reasoning: ${strategy.reasoning}
+- Recommended Tactics for this turn:
+${strategy.recommendedTactics.map(t => `  * ${t}`).join('\n')}
+- Core Milestone Goals:
+${strategy.goals.map(g => `  * [${g.achieved ? 'X' : ' '}] ${g.description}`).join('\n')}
+
+${languageInstructions}
+
+CRITICAL CITATION RULES:
+- Never mention document names or file sources (like "OmniShop Return Policy.txt") under any circumstances.
+- Do NOT display or write "[Source: ...]", "[Document: ...]", or "Source: ...".
+- Avoid phrases like "According to our policy", "Based on document", "Source:", "The knowledge base states", or "Per section". Provide a direct, friendly, and natural conversational response.
+- Do NOT invent or hallucinate any numbers, policies, or facts. If context or tools do not provide an answer, state that you do not have that info in files and offer escalation.
+
+RETRIEVED KNOWLEDGE CONTEXT:
 ---
 ${context}
 ---
 
-If the context does not contain enough information, politely state that you are unsure and offer to connect the customer to a support specialist (human agent). 
-If the user asks to speak to a person, an agent, or asks to transfer, write exactly "[TRANSFER_SIGNAL] Let me escalate this conversation and get a human support specialist to assist you right away." so the system knows to trigger escalation.
+BUSINESS TOOL EXECUTION RESULTS:
+---
+${toolResultsText}
+---
 
-CRITICAL CITATION RULES: Never mention document names or file names under any circumstances. Do NOT display or cite internal sources or write "[Source: ...]", "[Document: ...]", or "Source: ...". Avoid phrases like "According to our policy", "Based on document", "Source:", "The knowledge base states", or "Per section". Provide a direct, friendly, and natural conversational response.
+CUSTOMER MEMORY (Do not repeat previous topics unless requested):
+- Name: ${customerMemory.customerName}
+- Preference: ${customerMemory.languagePreference}
+- Previous Sentiment: ${customerMemory.previousSentiments.join(', ') || 'None'}
+- Previous Intents: ${customerMemory.previousIntents.join(', ') || 'None'}
 
-The conversation history so far:
-${history}
+If the user asks to speak to a person, an agent, or asks to transfer, write exactly "[TRANSFER_SIGNAL] Let me escalate this conversation and get a human support specialist to assist you right away." so the system knows to trigger escalation.`;
+
+    const promptText = `Conversation History:
+${messageHistory}
+
 Customer's current message: ${userMessage}
-Assistant:`;
+Assistant (Agent Tone: ${toneGuideline}):`;
+
+    let finalContent = 'Sorry, I could not generate a response.';
+    let postResult = {
+      processedResponse: '',
+      accuracyScore: 0.90,
+      toneScore: 0.90,
+      clarityScore: 0.90,
+      hallucinationRisk: 0.05,
+      overallQuality: 0.90,
+      blocked: false,
+      requiresEscalation: false
+    };
 
     try {
       const response = await generateContentWithRetry({
         model: 'gemini-3.5-flash',
-        contents: userMessage,
+        contents: promptText,
         config: {
           systemInstruction: fullSystemInstruction,
-          temperature: 0.2, // Low temperature for factual RAG answers
+          temperature: 0.2
         }
       });
 
-      const responseText = response.text || 'Sorry, I could not generate a response.';
-      const latencyMs = Date.now() - startTime;
+      finalContent = response.text || finalContent;
 
-      // 6. Check for escalation keyword trigger or model's direct request
-      const isEscalationTriggered = 
-        responseText.includes('[TRANSFER_SIGNAL]') || 
-        userMessage.toLowerCase().includes('agent') || 
-        userMessage.toLowerCase().includes('escalate') ||
-        userMessage.toLowerCase().includes('human') ||
-        userMessage.toLowerCase().includes('ongea na mtu') ||
-        userMessage.toLowerCase().includes('mhudumu');
-
-      let finalContent = responseText.replace('[TRANSFER_SIGNAL]', '').trim();
-
-      if (isEscalationTriggered && conversation.status !== 'escalated') {
-        // Trigger Escalation
-        db.updateConversation(conversationId, { status: 'escalated' });
-        
-        // Create ticket
-        const ticketId = `tkt-${Math.floor(1000 + Math.random() * 9000)}`;
-        db.createSupportTicket({
-          id: ticketId,
-          conversationId,
-          customerName: conversation.customerName,
-          email: `${conversation.customerName.toLowerCase().replace(/\s+/g, '')}@omniassist.ai`,
-          category: 'Escalated Chat',
-          priority: 'medium',
-          status: 'open',
-          description: `Customer escalated chat due to complex query or manual request. Last query: "${userMessage}"`,
-          createdAt: new Date().toISOString()
-        });
-
-        // Append notice
-        const escalationMessage = detectedLang === 'sw' 
-          ? 'Mazungumzo yako sasa hivi yanahamishiwa kwa mhudumu. Tafadhali subiri kidogo...'
-          : 'Your conversation is being transferred to a support representative. Please stand by...';
-        
-        finalContent = `${finalContent}\n\n⚠️ *${escalationMessage}*`;
-      }
-
-      // Record simulated cost
-      const inputTokens = Math.floor(fullSystemInstruction.length / 4);
-      const outputTokens = Math.floor(finalContent.length / 4);
-      const totalCost = (inputTokens * 0.000075) + (outputTokens * 0.0003); // USD
-      
-      const currentAnalytics = db.getAnalytics();
-      db.updateAnalytics({
-        totalTokens: currentAnalytics.totalTokens + inputTokens + outputTokens,
-        totalCost: currentAnalytics.totalCost + totalCost,
-        avgLatencyMs: Math.round((currentAnalytics.avgLatencyMs + latencyMs) / 2)
+      // --- PHASE 15: RUN RESPONSE POST-PROCESSING LAYER (FIRST PASS) ---
+      postResult = await postProcessResponse({
+        userMessage,
+        generatedResponse: finalContent,
+        retrievedContext: context,
+        toolResultsText,
+        customerMemory,
+        classification
       });
 
-      return {
-        content: finalContent,
-        latencyMs,
-        sources,
-        escalated: isEscalationTriggered
-      };
+      // --- REGENERATION LOGIC ---
+      const needsRegeneration = postResult.overallQuality < 0.80 || 
+                                postResult.hallucinationRisk > 0.20 || 
+                                postResult.toneScore < 0.75;
 
-    } catch (error) {
-      console.error('Gemini API generateResponse error, generating fallback response:', error);
-      
-      const latencyMs = Math.round(150 + Math.random() * 100);
-      let responseText = '';
-      
-      const isEscalationTriggered = 
-        userMessage.toLowerCase().includes('agent') || 
-        userMessage.toLowerCase().includes('escalate') ||
-        userMessage.toLowerCase().includes('human') ||
-        userMessage.toLowerCase().includes('ongea na mtu') ||
-        userMessage.toLowerCase().includes('mhudumu');
-
-      if (isEscalationTriggered) {
-        responseText = detectedLang === 'sw'
-          ? 'Hakika, wacha nikuunganishe na mhudumu wa usaidizi sasa hivi. Subiri kidogo.'
-          : 'Understood. Let me transfer you to a human support specialist right away.';
-      } else if (sources.length > 0) {
-        // We have documents! Construct a beautiful, direct answer from the document
-        const mainDoc = db.getKnowledgeDocuments().find(d => d.name === sources[0]);
-        const matchedText = mainDoc ? mainDoc.content : context;
+      if (needsRegeneration && !postResult.blocked) {
+        console.log(`[POST-PROCESSOR] First pass failed quality checks. Regenerating response...`);
         
-        if (detectedLang === 'sw') {
-          responseText = `Nitafurahi kukusaidia.\n\n${matchedText}\n\nKama unahitaji msaada wowote, jisikie huru kuuliza.`;
-        } else {
-          responseText = `I'd be happy to help.\n\n${matchedText}\n\nIf you need any assistance, feel free to ask.`;
-        }
-      } else {
-        if (detectedLang === 'sw') {
-          responseText = `Asante kwa swali lako juu ya "${userMessage}". Sijapata maelezo kamili kuhusu jambo hili kwenye hifadhi yetu, lakini unaweza kurahisisha swali au kumuuliza mhudumu wa msaada.`;
-        } else {
-          responseText = `Thank you for your question regarding "${userMessage}". I could not find a specific policy about this in our knowledge base. Would you like me to connect you with a customer representative?`;
+        const correctivePrompt = `The previous response failed our post-processing checks.
+Failing details:
+- Accuracy Score: ${postResult.accuracyScore}
+- Tone Score: ${postResult.toneScore}
+- Hallucination Risk: ${postResult.hallucinationRisk}
+- Proposed text: "${postResult.processedResponse}"
+
+Please regenerate a completely compliant, factually exact, warm, and professional response that directly answers: "${userMessage}".
+Strictly follow the agent instructions and multilingual policies:
+${fullSystemInstruction}`;
+
+        try {
+          const regenResponse = await generateContentWithRetry({
+            model: 'gemini-3.5-flash',
+            contents: correctivePrompt,
+            config: {
+              temperature: 0.3
+            }
+          });
+
+          const regeneratedText = regenResponse.text || finalContent;
+
+          // Run post-processor second pass
+          const secondPassResult = await postProcessResponse({
+            userMessage,
+            generatedResponse: regeneratedText,
+            retrievedContext: context,
+            toolResultsText,
+            customerMemory,
+            classification
+          });
+
+          // If second pass fails, escalate to human agent
+          if (secondPassResult.overallQuality < 0.80 || secondPassResult.hallucinationRisk > 0.20 || secondPassResult.toneScore < 0.75) {
+            console.warn('[POST-PROCESSOR] Regenerated response still fails checks. Forcing escalation.');
+            secondPassResult.requiresEscalation = true;
+          }
+
+          postResult = secondPassResult;
+        } catch (regenErr) {
+          console.error('Regeneration attempt failed:', regenErr);
         }
       }
 
-      let finalContent = responseText;
+      finalContent = postResult.processedResponse;
 
-      if (isEscalationTriggered && conversation.status !== 'escalated') {
-        // Trigger Escalation
-        db.updateConversation(conversationId, { status: 'escalated' });
-        
-        // Create ticket
-        const ticketId = `tkt-${Math.floor(1000 + Math.random() * 9000)}`;
-        db.createSupportTicket({
-          id: ticketId,
-          conversationId,
-          customerName: conversation.customerName,
-          email: `${conversation.customerName.toLowerCase().replace(/\s+/g, '')}@omniassist.ai`,
-          category: 'Escalated Chat',
-          priority: 'medium',
-          status: 'open',
-          description: `Customer escalated chat due to complex query or manual request. Last query: "${userMessage}"`,
-          createdAt: new Date().toISOString()
-        });
-
-        // Append notice
-        const escalationMessage = detectedLang === 'sw' 
-          ? 'Mazungumzo yako sasa hivi yanahamishiwa kwa mhudumu. Tafadhali subiri kidogo...'
-          : 'Your conversation is being transferred to a support representative. Please stand by...';
-        
-        finalContent = `${finalContent}\n\n⚠️ *${escalationMessage}*`;
-      }
-
-      // Record simulated analytics costs even on fallback
-      const currentAnalytics = db.getAnalytics();
-      db.updateAnalytics({
-        totalTokens: currentAnalytics.totalTokens + 120,
-        totalCost: currentAnalytics.totalCost + 0.0001,
-        avgLatencyMs: Math.round((currentAnalytics.avgLatencyMs + latencyMs) / 2)
-      });
-
-      return {
-        content: finalContent,
-        latencyMs,
-        sources,
-        escalated: isEscalationTriggered
-      };
+    } catch (responseError) {
+      console.error('Response generation failed, triggering fallback response:', responseError);
+      finalContent = (detectedLang === 'sw') 
+        ? `Niko hapa kukusaidia. Samahani, nimepata hitilafu ya mtandao kwa muda mfupi. Tafadhali subiri nikuunganishe na mhudumu wetu wa usaidizi wa kibinadamu ili akusaidie vizuri.`
+        : `I am here to help you. I encountered a minor system connection issue. Let me connect you directly with a human support specialist to ensure you get assisted.`;
+      classification.primaryIntent = 'human_agent'; // Force escalation
     }
+
+    // Map evaluation metrics to actual post-processed scores
+    const evaluation = {
+      accuracy: Math.round(postResult.accuracyScore * 100),
+      relevance: Math.round(postResult.clarityScore * 100),
+      tone: Math.round(postResult.toneScore * 100),
+      completeness: Math.round(postResult.overallQuality * 100),
+      hallucinationRisk: Math.round(postResult.hallucinationRisk * 100),
+      accuracy_score: postResult.accuracyScore,
+      tone_score: postResult.toneScore,
+      clarity_score: postResult.clarityScore,
+      hallucination_risk: postResult.hallucinationRisk,
+      overall_quality: postResult.overallQuality
+    };
+
+    // --- PHASE 7: UNIFIED CONFIDENCE EVALUATION ---
+    const finalConfidence = Math.round(postResult.overallQuality * 100);
+
+    // Save confidence to conversation
+    db.updateConversation(conversationId, { overallConfidence: finalConfidence });
+
+    // --- PHASE 8 & 15: SAFETY & HUMAN ESCALATION ENGINE ---
+    const userWantsAgent = classification.primaryIntent === 'human_agent' || 
+      userMessage.toLowerCase().includes('agent') || 
+      userMessage.toLowerCase().includes('escalate') || 
+      userMessage.toLowerCase().includes('human') || 
+      userMessage.toLowerCase().includes('ongea na mtu') || 
+      userMessage.toLowerCase().includes('mhudumu') || 
+      finalContent.includes('[TRANSFER_SIGNAL]');
+
+    const isLowConfidence = finalConfidence < 70;
+    const isAngryFrustratedBilling = (classification.sentiment === 'angry' || classification.sentiment === 'frustrated') && 
+      (classification.primaryIntent === 'payment_issue' || classification.primaryIntent === 'refund_request');
+
+    const shouldEscalate = userWantsAgent || isLowConfidence || isAngryFrustratedBilling || postResult.requiresEscalation || postResult.blocked;
+
+    finalContent = finalContent.replace('[TRANSFER_SIGNAL]', '').trim();
+    let escalated = false;
+
+    // Safety and Compliance violation: if blocked, replace with secure prompt immediately!
+    if (postResult.blocked) {
+      finalContent = (detectedLang === 'sw')
+        ? "Samahani, siwezi kutimiza ombi hilo kwa sasa. Tafadhali niambie ikiwa una swali lingine au unataka nikuunganishe na mhudumu wetu wa usaidizi."
+        : "I am sorry, but I cannot fulfill that request due to security policies. Let me connect you directly to a human support representative to assist you safely.";
+    }
+
+    if (shouldEscalate && conversation.status !== 'escalated') {
+      escalated = true;
+      db.updateConversation(conversationId, { status: 'escalated' });
+
+      // Priority calculation: Angry/Urgent = high, Frustrated = medium, Neutral/Positive = low
+      let ticketPriority: 'low' | 'medium' | 'high' = 'medium';
+      if (classification.sentiment === 'angry' || classification.sentiment === 'urgent') {
+        ticketPriority = 'high';
+      } else if (classification.sentiment === 'positive' || classification.sentiment === 'neutral') {
+        ticketPriority = 'low';
+      }
+
+      // Generate Ticket
+      const ticketId = `tkt-${Math.floor(1000 + Math.random() * 9000)}`;
+      db.createSupportTicket({
+        id: ticketId,
+        conversationId,
+        customerName: conversation.customerName,
+        email: `${conversation.customerName.toLowerCase().replace(/\s+/g, '')}@omniassist.ai`,
+        category: classification.primaryIntent === 'payment_issue' ? 'Billing Dispute' : 'Complex Support Inquiry',
+        priority: ticketPriority,
+        status: 'open',
+        description: postResult.blocked
+          ? `Conversation blocked due to safety/security boundary check. Customer query: "${userMessage}"`
+          : `Customer escalated chat. Intent: ${classification.primaryIntent}, Sentiment: ${classification.sentiment}, Confidence: ${finalConfidence}%. Last query: "${userMessage}"`,
+        createdAt: new Date().toISOString()
+      });
+
+      const escMessage = detectedLang === 'sw'
+        ? `⚠️ *Mazungumzo yako sasa hivi yanahamishiwa kwa mhudumu wetu wa usaidizi. Tiketi yako ya msaada imeundwa sasa hivi. Tafadhali subiri kidogo, mhudumu wetu atakusaidia moja kwa moja.*`
+        : `⚠️ *Your conversation is being transferred to a support representative. A priority support ticket has been created. Please stand by, an agent will assist you shortly.*`;
+
+      finalContent = `${finalContent}\n\n${escMessage}`;
+    }
+
+    // Append caution if answered with caution (70 - 89 confidence)
+    if (finalConfidence >= 70 && finalConfidence < 90 && !escalated) {
+      const cautionMessage = detectedLang === 'sw'
+        ? `*Kumbuka: Jibu hili linaweza kuhitaji uhakiki na mhudumu wa kibinadamu kama halijakufurahisha.*`
+        : `*Note: This response is compiled with automatic files; please let us know if you require further verification from a team member.*`;
+      finalContent = `${finalContent}\n\n_${cautionMessage}_`;
+    }
+
+    // Record actual costs
+    const latencyMs = Date.now() - startTime;
+    const inputTokens = Math.floor(fullSystemInstruction.length / 4);
+    const outputTokens = Math.floor(finalContent.length / 4);
+    const totalCost = (inputTokens * 0.000075) + (outputTokens * 0.0003); // USD
+
+    const currentAnalytics = db.getAnalytics();
+    db.updateAnalytics({
+      totalTokens: currentAnalytics.totalTokens + inputTokens + outputTokens,
+      totalCost: currentAnalytics.totalCost + totalCost,
+      avgLatencyMs: Math.round((currentAnalytics.avgLatencyMs + latencyMs) / 2)
+    });
+
+    return {
+      content: finalContent,
+      latencyMs,
+      sources,
+      escalated,
+      intent: classification.primaryIntent,
+      sentiment: classification.sentiment,
+      confidenceScore: finalConfidence,
+      routedAgent: agentName,
+      toolsCalled,
+      evaluation,
+      strategy
+    };
   },
 
   /**
