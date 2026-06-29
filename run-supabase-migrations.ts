@@ -78,16 +78,81 @@ async function run() {
 
     // Now seed the database
     const dbPath = path.join(process.cwd(), 'db.json');
-    if (!fs.existsSync(dbPath)) {
-      console.error('❌ Error: db.json not found at:', dbPath);
-      await client.end();
-      process.exit(1);
+    let dbData: any = null;
+    if (fs.existsSync(dbPath)) {
+      const rawData = fs.readFileSync(dbPath, 'utf-8');
+      dbData = JSON.parse(rawData);
+      console.log('Seeding db.json payload into "duka_letu_sync"...');
+    } else {
+      console.log('⚠️ db.json not found. Seeding with default INITIAL_DB structure...');
+      dbData = {
+        users: [
+          {
+            id: 'usr-1',
+            name: 'OmniAdmin',
+            email: 'admin@DukaLetuAssist.com',
+            passwordHash: 'admin123',
+            role: 'admin',
+            createdAt: new Date().toISOString()
+          },
+          {
+            id: 'usr-2',
+            name: 'Agent Sarah',
+            email: 'agent@DukaLetuAssist.com',
+            passwordHash: 'agent123',
+            role: 'agent',
+            createdAt: new Date().toISOString()
+          },
+          {
+            id: 'usr-3',
+            name: 'Alex Customer',
+            email: 'customer@DukaLetuAssist.com',
+            passwordHash: 'customer123',
+            role: 'customer',
+            createdAt: new Date().toISOString()
+          },
+          {
+            id: 'usr-4',
+            name: 'Inquiry Guest',
+            email: 'guest@DukaLetuAssist.com',
+            passwordHash: 'guest123',
+            role: 'visitor',
+            createdAt: new Date().toISOString()
+          }
+        ],
+        conversations: [],
+        messages: [],
+        supportTickets: [],
+        promptVersions: [
+          {
+            id: 'p-en-v1',
+            name: 'English Default Support System',
+            version: 1,
+            content: `You are the Duka Letu Agent Customer Support Voice & Chat Agent, a friendly, professional assistant...`,
+            language: 'en',
+            isActive: true,
+            createdAt: new Date().toISOString()
+          }
+        ],
+        promptTests: [],
+        knowledgeDocuments: [],
+        analytics: {
+          totalConversations: 0,
+          activeUsers: 0,
+          avgCsat: 5.0,
+          resolutionRate: 100,
+          totalTokens: 0,
+          totalCost: 0,
+          avgLatencyMs: 0,
+          escalationRate: 0,
+          dailyMetrics: [],
+          topicDistribution: []
+        },
+        auditLogs: [],
+        knowledgeGaps: []
+      };
+      console.log('Seeding inline default payload into "duka_letu_sync"...');
     }
-
-    const rawData = fs.readFileSync(dbPath, 'utf-8');
-    const dbData = JSON.parse(rawData);
-
-    console.log('Seeding db.json payload into "duka_letu_sync"...');
 
     const upsertQuery = `
       INSERT INTO duka_letu_sync (id, data, updated_at)

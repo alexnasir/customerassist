@@ -8,6 +8,7 @@ import PromptView from './components/PromptView.tsx';
 import KnowledgeBaseView from './components/KnowledgeBaseView.tsx';
 import TicketsView from './components/TicketsView.tsx';
 import SystemLogsView from './components/SystemLogsView.tsx';
+import StorefrontView from './components/StorefrontView.tsx';
 import { User } from './types.ts';
 
 export default function App() {
@@ -24,7 +25,8 @@ export default function App() {
   const demoAccounts = [
     { label: 'Admin Panel', email: 'admin@DukaLetuAssist.com', pass: 'admin123', color: 'bg-cyan-500/10 border-cyan-800/20 text-cyan-400' },
     { label: 'Support Agent', email: 'agent@DukaLetuAssist.com', pass: 'agent123', color: 'bg-purple-500/10 border-purple-800/20 text-purple-400' },
-    { label: 'Customer Portal', email: 'customer@DukaLetuAssist.com', pass: 'customer123', color: 'bg-emerald-500/10 border-emerald-800/20 text-emerald-400' }
+    { label: 'Customer Portal', email: 'customer@DukaLetuAssist.com', pass: 'customer123', color: 'bg-emerald-500/10 border-emerald-800/20 text-emerald-400' },
+    { label: 'Website Inquiry Widget', email: 'guest@DukaLetuAssist.com', pass: 'guest123', color: 'bg-indigo-500/10 border-indigo-800/20 text-indigo-400' }
   ];
 
   const handleLogin = async (e?: React.FormEvent, customEmail?: string, customPass?: string) => {
@@ -49,6 +51,8 @@ export default function App() {
         // Auto route to appropriate view based on role
         if (data.user.role === 'customer') {
           setActiveTab('chat');
+        } else if (data.user.role === 'visitor') {
+          setActiveTab('storefront');
         } else {
           setActiveTab('dashboard');
         }
@@ -154,6 +158,11 @@ export default function App() {
         </div>
       </div>
     );
+  }
+
+  // Bypass system design entirely for inquiry-level customers, routing them directly to the native embedded store-widget view
+  if (currentUser.role === 'visitor') {
+    return <StorefrontView onLogout={handleLogout} />;
   }
 
   return (

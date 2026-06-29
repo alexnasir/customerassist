@@ -20,8 +20,7 @@ dotenv.config();
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
 
-const DB_FILE = path.join(process.cwd(), 'db.json');
-
+// Supabase primary state holder. Local db.json operations have been removed as requested.
 interface DatabaseSchema {
   users: (User & { passwordHash: string })[];
   conversations: Conversation[];
@@ -215,6 +214,14 @@ const INITIAL_DB: DatabaseSchema = {
       email: 'customer@DukaLetuAssist.com',
       passwordHash: 'customer123',
       role: 'customer',
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: 'usr-4',
+      name: 'Inquiry Guest',
+      email: 'guest@DukaLetuAssist.com',
+      passwordHash: 'guest123',
+      role: 'visitor',
       createdAt: new Date().toISOString()
     }
   ],
@@ -465,28 +472,12 @@ class LocalDB {
 
   constructor() {
     this.data = INITIAL_DB;
-    this.load();
     this.initSupabase();
-  }
-
-  private load() {
-    try {
-      if (fs.existsSync(DB_FILE)) {
-        const fileContent = fs.readFileSync(DB_FILE, 'utf-8');
-        this.data = JSON.parse(fileContent);
-      } else {
-        this.save();
-      }
-    } catch (e) {
-      console.error('Error loading db.json, resetting to seed data.', e);
-      this.data = INITIAL_DB;
-      this.save();
-    }
   }
 
   private async initSupabase() {
     if (!supabaseUrl || !supabaseSecretKey) {
-      console.log('Supabase credentials not configured in environment. Operating in offline db.json mode.');
+      console.log('Supabase credentials not configured in environment. Operating in memory-only mode.');
       return;
     }
 
@@ -504,7 +495,7 @@ class LocalDB {
 
       if (error) {
         if (error.code === '42P01') {
-          console.log('Supabase sync tables do not exist yet. Using local db.json.');
+          console.log('Supabase sync tables do not exist yet. Operating in-memory with default seed data.');
         } else {
           console.error('Failed to query master state from Supabase:', error.message);
         }
@@ -514,12 +505,17 @@ class LocalDB {
       if (data && data.data) {
         console.log('Successfully loaded and synchronized state from Supabase Cloud as primary DB!');
         this.data = data.data;
-        // Save back to local db.json cache to keep restarts rapid
-        try {
-          fs.writeFileSync(DB_FILE, JSON.stringify(this.data, null, 2), 'utf-8');
-        } catch (e) {
-          console.error('Failed to cache pulled Supabase state to db.json:', e);
-        }
+
+        // Ensure all seeded users are present (to support adding new demo accounts seamlessly)
+        INITIAL_DB.users.forEach(seededUser => {
+          const exists = this.data.users.some(u => u.email.toLowerCase() === seededUser.email.toLowerCase());
+          if (!exists) {
+            this.data.users.push(seededUser);
+          }
+        });
+        
+        // Background push any updates/additions back
+        this.save();
       } else {
         console.log('No existing state found in Supabase. Back-seeding current default data...');
         await this.saveToSupabase();
@@ -595,13 +591,9 @@ class LocalDB {
   }
 
   public save() {
-    try {
-      fs.writeFileSync(DB_FILE, JSON.stringify(this.data, null, 2), 'utf-8');
-      // Non-blocking trigger to persist state in Supabase in real-time!
-      this.saveToSupabase();
-    } catch (e) {
-      console.error('Failed to write db.json', e);
-    }
+    // Local db.json has been deleted.
+    // Trigger real-time non-blocking persistent update in Supabase
+    this.saveToSupabase();
   }
 
   // --- Users ---

@@ -2,7 +2,7 @@
  * Shared Type Definitions for Duka Letu Agent
  */
 
-export type UserRole = 'admin' | 'agent' | 'customer';
+export type UserRole = 'admin' | 'agent' | 'customer' | 'visitor';
 
 export interface User {
   id: string;

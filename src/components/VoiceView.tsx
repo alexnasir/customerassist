@@ -26,6 +26,12 @@ export default function VoiceView() {
   // Audio Playback
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const recognitionRef = useRef<any>(null);
+  const userTranscriptRef = useRef<string>('');
+
+  useEffect(() => {
+    userTranscriptRef.current = userTranscript;
+  }, [userTranscript]);
 
   // Stop all active voice emissions on tab switch / unmount
   useEffect(() => {
@@ -44,6 +50,13 @@ export default function VoiceView() {
         }
       } catch (e: any) {
         console.warn('[VoiceView] Cleanup synthesis fail:', e?.message || String(e));
+      }
+      try {
+        if (recognitionRef.current) {
+          recognitionRef.current.stop();
+        }
+      } catch (e: any) {
+        console.warn('[VoiceView] Cleanup recognition fail:', e);
       }
     };
   }, []);
@@ -197,24 +210,33 @@ export default function VoiceView() {
     }
   };
 
-  // Simulate Recording and Trigger process API
+  // Simulate/Execute Real Recording and Trigger process API
   const handleMicrophoneClick = async () => {
     if (voiceStatus === 'speaking' || voiceStatus === 'processing') {
       stopAllAudio();
       setVoiceStatus('idle');
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch (e) {}
+      }
       return;
     }
 
     if (voiceStatus === 'recording') {
-      // STOP recording & submit mock sound bytes
       setVoiceStatus('processing');
       setErrorMsg(null);
       
-      const queryText = selectedLanguage === 'en' 
-        ? 'Where is my order #OMNI-99321? Standard shipping.'
-        : 'Nataka kujua hali ya oda yangu.';
-        
-      await runVoiceAI(queryText);
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {
+          console.warn('[VoiceView] Error stopping recognition:', e);
+        }
+      } else {
+        const queryText = selectedLanguage === 'en' 
+          ? 'Where is my order #OMNI-99321? Standard shipping.'
+          : 'Nataka kujua hali ya oda yangu.';
+        await runVoiceAI(queryText);
+      }
       return;
     }
 
@@ -223,6 +245,58 @@ export default function VoiceView() {
     setUserTranscript('');
     setAiResponseText('');
     setVoiceStatus('recording');
+    setErrorMsg(null);
+
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognitionAPI) {
+      try {
+        const recognition = new SpeechRecognitionAPI();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = selectedLanguage === 'sw' ? 'sw-KE' : 'en-US';
+
+        recognition.onresult = (event: any) => {
+          let interimTranscript = '';
+          let finalTranscript = '';
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript;
+            } else {
+              interimTranscript += event.results[i][0].transcript;
+            }
+          }
+          const currentText = finalTranscript || interimTranscript;
+          if (currentText) {
+            setUserTranscript(currentText);
+          }
+        };
+
+        recognition.onerror = (e: any) => {
+          console.warn('[VoiceView] Speech recognition error:', e);
+        };
+
+        recognition.onend = () => {
+          console.log('[VoiceView] Speech recognition ended.');
+          setVoiceStatus(prev => {
+            if (prev === 'recording') {
+              const textToSubmit = userTranscriptRef.current || (selectedLanguage === 'en' 
+                ? 'Where is my order #OMNI-99321? Standard shipping.'
+                : 'Nataka kujua hali ya oda yangu.');
+              runVoiceAI(textToSubmit);
+              return 'processing';
+            }
+            return prev;
+          });
+        };
+
+        recognitionRef.current = recognition;
+        recognition.start();
+      } catch (err) {
+        console.error('[VoiceView] Failed to start speech recognition:', err);
+      }
+    } else {
+      console.log('[VoiceView] Web Speech API not supported. Falling back to simulation.');
+    }
   };
 
   // Run Voice Processing Pipeline
