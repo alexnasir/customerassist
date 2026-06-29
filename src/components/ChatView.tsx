@@ -208,53 +208,53 @@ export default function ChatView() {
   const activeStrategy = latestAiMsg?.strategy || activeConv?.strategy;
 
   return (
-    <div className="flex-1 bg-[#090D16] flex h-full" id="chat-view">
+    <div className="flex-1 bg-zinc-950 flex h-full" id="chat-view">
       {/* LEFT PANEL: Conversation List */}
-      <div className="w-80 border-r border-[#1E293B] bg-[#0E1424] flex flex-col h-full shrink-0">
-        <div className="p-4 border-b border-[#1E293B] flex items-center justify-between">
-          <h3 className="font-bold text-white text-sm uppercase tracking-wider flex items-center gap-2">
+      <div className="w-80 border-r border-zinc-800 bg-zinc-900 flex flex-col h-full shrink-0">
+        <div className="p-5 border-b border-zinc-800 flex items-center justify-between">
+          <h3 className="font-semibold text-white flex items-center gap-2">
             <MessageSquare className="w-4 h-4 text-cyan-400" />
             Support Chats
           </h3>
           <button 
             onClick={startNewConversation}
-            className="p-1.5 bg-cyan-950/40 text-cyan-400 hover:bg-cyan-900/40 rounded border border-cyan-800/30 transition-all duration-150"
+            className="p-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-xl transition-all"
             title="Start New Chat"
           >
             <Plus className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
           {conversations.map((conv) => {
             const isActive = activeConv?.id === conv.id;
             return (
               <button
                 key={conv.id}
                 onClick={() => handleSelectConversation(conv)}
-                className={`w-full text-left p-3.5 rounded-xl transition-all duration-200 border ${
+                className={`w-full text-left p-4 rounded-2xl transition-all border ${
                   isActive 
-                    ? 'bg-[#1E293B]/70 border-cyan-500/30 shadow-lg shadow-cyan-950/20' 
-                    : 'hover:bg-slate-800/20 border-transparent'
+                    ? 'bg-zinc-800 border-zinc-700' 
+                    : 'hover:bg-zinc-900 border-transparent'
                 }`}
               >
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-bold text-white leading-none">{conv.customerName}</span>
-                  <span className={`text-[9px] font-semibold px-2 py-0.5 rounded uppercase ${
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium text-white text-sm">{conv.customerName}</span>
+                  <span className={`text-[10px] font-mono uppercase px-2.5 py-0.5 rounded border ${
                     conv.status === 'escalated' 
-                      ? 'bg-rose-950/50 text-rose-400 border border-rose-800/20' 
+                      ? 'bg-rose-950 text-rose-400 border-rose-900/30' 
                       : conv.status === 'resolved' 
-                        ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-800/20'
-                        : 'bg-cyan-950/40 text-cyan-400 border border-cyan-800/20'
+                        ? 'bg-emerald-950 text-emerald-400 border-emerald-900/30'
+                        : 'bg-cyan-950 text-cyan-400 border-cyan-900/30'
                   }`}>
                     {conv.status}
                   </span>
                 </div>
-                <p className="text-[10px] text-gray-500 truncate">ID: {conv.id} • Last active: {new Date(conv.lastMessageAt).toLocaleTimeString()}</p>
+                <p className="text-xs text-zinc-500">ID: {conv.id}</p>
                 {conv.rating && (
-                  <div className="flex items-center gap-1 mt-1.5 text-amber-400">
-                    <Star className="w-3 h-3 fill-amber-400" />
-                    <span className="text-[10px] font-bold">{conv.rating}/5 CSAT</span>
+                  <div className="flex items-center gap-1 mt-2 text-amber-400 text-xs">
+                    <Star className="w-3 h-3 fill-current" />
+                    {conv.rating}/5
                   </div>
                 )}
               </button>
@@ -264,34 +264,25 @@ export default function ChatView() {
       </div>
 
       {/* CENTER PANEL: Messages Arena */}
-      <div className="flex-1 flex flex-col h-full bg-[#090D16]">
+      <div className="flex-1 flex flex-col h-full bg-zinc-950">
         {activeConv ? (
           <>
             {/* Active chat header */}
-            <div className="p-4 border-b border-[#1E293B] bg-[#0E1424] flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <h4 className="font-bold text-white text-base leading-none">{activeConv.customerName}</h4>
-                  <span className="text-xs text-gray-400 font-mono">({activeConv.id})</span>
+            <div className="p-5 border-b border-zinc-800 bg-zinc-900 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-zinc-700 rounded-2xl flex items-center justify-center text-sm font-semibold text-white">
+                  {activeConv.customerName.slice(0, 1)}
                 </div>
-                <div className="flex items-center gap-3 mt-1.5">
-                  <span className="text-xs text-cyan-400 flex items-center gap-1 font-semibold">
-                    <Globe className="w-3 h-3" />
-                    Language: {activeConv.language.toUpperCase()}
-                  </span>
-                  {activeConv.status === 'escalated' && (
-                    <span className="text-xs text-rose-400 font-medium flex items-center gap-1 animate-pulse">
-                      <AlertCircle className="w-3 h-3" />
-                      Live Agent Queue Active
-                    </span>
-                  )}
+                <div>
+                  <h4 className="font-semibold text-white">{activeConv.customerName}</h4>
+                  <div className="text-xs text-zinc-500 font-mono">ID: {activeConv.id}</div>
                 </div>
               </div>
 
               {activeConv.status !== 'resolved' && (
                 <button
                   onClick={resolveConversation}
-                  className="bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 text-xs font-bold px-4 py-2 rounded-lg border border-emerald-800/30 transition-all duration-150"
+                  className="text-sm px-5 py-2 bg-emerald-950 hover:bg-emerald-900 text-emerald-400 border border-emerald-900 rounded-2xl font-medium transition-all"
                 >
                   Resolve Conversation
                 </button>
@@ -299,7 +290,7 @@ export default function ChatView() {
             </div>
 
             {/* Messages body */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            <div className="flex-1 overflow-y-auto p-6 space-y-7">
               {messages.map((msg) => {
                 const isUser = msg.sender === 'user';
                 const isAgent = msg.sender === 'agent';
@@ -307,63 +298,44 @@ export default function ChatView() {
                 return (
                   <div
                     key={msg.id}
-                    className={`flex gap-3 max-w-xl ${isUser ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
+                    className={`flex gap-4 max-w-[70%] ${isUser ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
                   >
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-white font-bold text-xs uppercase ${
+                    <div className={`w-8 h-8 rounded-2xl flex items-center justify-center shrink-0 text-xs font-semibold text-white ${
                       isUser 
-                        ? 'bg-gradient-to-tr from-cyan-600 to-indigo-600' 
+                        ? 'bg-zinc-700' 
                         : isAgent 
-                          ? 'bg-purple-600' 
-                          : 'bg-gradient-to-tr from-indigo-600 to-pink-600'
+                          ? 'bg-purple-700' 
+                          : 'bg-gradient-to-br from-zinc-700 to-zinc-800'
                     }`}>
-                      {isUser ? 'U' : isAgent ? 'AG' : <Sparkles className="w-3.5 h-3.5" />}
+                      {isUser ? 'U' : isAgent ? 'AG' : 'AI'}
                     </div>
 
-                    <div>
-                      <div className={`p-4 rounded-2xl border ${
-                        isUser 
-                          ? 'bg-[#1E293B] border-[#334155] text-white rounded-tr-none' 
-                          : isAgent
-                            ? 'bg-purple-950/20 border-purple-900/30 text-white rounded-tl-none'
-                            : 'bg-[#0F172A] border-[#1E293B] text-gray-200 rounded-tl-none'
-                      }`}>
-                        <div className="flex items-center justify-between gap-4 mb-1 border-b border-white/5 pb-1 text-[10px] text-gray-400 font-semibold tracking-wider uppercase">
-                          <span>{msg.senderName}</span>
-                          <span>{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                        </div>
-                        <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                        
-                        {/* Audio Wave for Voice Messages */}
-                        {msg.type === 'voice' && (
-                          <div className="mt-3 flex items-center gap-2 bg-[#090D16]/50 p-2 rounded-lg border border-white/5">
-                            <span className="text-[10px] bg-cyan-950 text-cyan-400 px-1.5 py-0.5 rounded uppercase font-bold">Voice Playback</span>
-                            <div className="flex items-center gap-1">
-                              <span className="w-1 h-3 bg-cyan-400 rounded-full animate-pulse"></span>
-                              <span className="w-1 h-5 bg-cyan-400 rounded-full animate-pulse" style={{ animationDelay: '0.1s' }}></span>
-                              <span className="w-1 h-2 bg-cyan-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></span>
-                              <span className="w-1 h-4 bg-cyan-400 rounded-full animate-pulse" style={{ animationDelay: '0.3s' }}></span>
-                            </div>
-                          </div>
-                        )}
+                    <div className={`px-5 py-4 rounded-3xl text-sm leading-relaxed border ${
+                      isUser 
+                        ? 'bg-zinc-800 border-zinc-700 text-zinc-100 rounded-tr-none' 
+                        : isAgent
+                          ? 'bg-purple-950/50 border-purple-900/50 text-white rounded-tl-none'
+                          : 'bg-zinc-900 border-zinc-800 text-zinc-100 rounded-tl-none'
+                    }`}>
+                      <div className="text-[10px] text-zinc-500 mb-1.5 font-mono">
+                        {msg.senderName} • {new Date(msg.timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
                       </div>
-
-                
+                      <p>{msg.content}</p>
                     </div>
                   </div>
                 );
               })}
 
               {loading && (
-                <div className="flex gap-3 max-w-xl mr-auto">
-                  <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white shrink-0">
-                    <Sparkles className="w-3.5 h-3.5 animate-spin" />
+                <div className="flex gap-4 max-w-[70%] mr-auto">
+                  <div className="w-8 h-8 rounded-2xl bg-zinc-800 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-4 h-4 text-zinc-400 animate-pulse" />
                   </div>
-                  <div className="bg-[#0F172A] border border-[#1E293B] p-4 rounded-2xl rounded-tl-none">
-                    <div className="flex gap-1 items-center py-1">
-                      <span className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce"></span>
-                      <span className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }}></span>
-                      <span className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></span>
-                    </div>
+                  <div className="bg-zinc-900 border border-zinc-800 px-5 py-4 rounded-3xl rounded-tl-none text-sm text-zinc-400 flex items-center gap-1">
+                    <span className="animate-pulse">Thinking</span>
+                    <span className="animate-pulse">.</span>
+                    <span className="animate-pulse">.</span>
+                    <span className="animate-pulse">.</span>
                   </div>
                 </div>
               )}
@@ -373,31 +345,24 @@ export default function ChatView() {
 
             {/* Warning Escalation notice */}
             {activeConv.status === 'escalated' && (
-              <div className="bg-[#1C161F] border-t border-b border-rose-950/40 p-3.5 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <AlertCircle className="w-4 h-4 text-rose-400" />
-                  <p className="text-xs text-rose-300 font-medium">
-                    This conversation is escalated. AI automation is paused. Go to **Agent Workspace** to reply as Agent Sarah.
-                  </p>
-                </div>
-                <span className="text-[10px] font-bold text-rose-400 uppercase tracking-widest bg-rose-950/50 px-2 py-0.5 rounded">
-                  Manual State
-                </span>
+              <div className="bg-rose-950/30 border-y border-rose-900 p-4 text-sm text-rose-300 flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 shrink-0" />
+                This conversation is escalated. AI automation is paused.
               </div>
             )}
 
             {/* Input field footer */}
-            <form onSubmit={handleSendMessage} className="p-4 border-t border-[#1E293B] bg-[#0E1424] flex items-center gap-3">
-              <div className="flex items-center gap-2 border border-[#1E293B] bg-[#090D16] px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-400 shrink-0">
-                <Globe className="w-3.5 h-3.5 text-cyan-400" />
+            <form onSubmit={handleSendMessage} className="p-5 border-t border-zinc-800 bg-zinc-900 flex gap-3">
+              <div className="flex items-center bg-zinc-950 border border-zinc-800 rounded-2xl px-4 text-xs">
+                <Globe className="w-4 h-4 text-zinc-400 mr-2" />
                 <select 
                   value={language} 
                   onChange={(e) => setLanguage(e.target.value as any)}
-                  className="bg-transparent border-none outline-none text-white font-medium cursor-pointer"
+                  className="bg-transparent outline-none text-zinc-200 py-3 pr-2 cursor-pointer"
                 >
-                  <option value="auto" className="bg-[#090D16]">Language: Auto</option>
-                  <option value="en" className="bg-[#090D16]">English Only</option>
-                  <option value="sw" className="bg-[#090D16]">Kiswahili</option>
+                  <option value="auto">Auto</option>
+                  <option value="en">EN</option>
+                  <option value="sw">SW</option>
                 </select>
               </div>
 
@@ -407,13 +372,13 @@ export default function ChatView() {
                 onChange={(e) => setInputText(e.target.value)}
                 placeholder={activeConv.status === 'escalated' ? 'AI is paused while escalated...' : 'Ask about shipping, refunds, orders...'}
                 disabled={activeConv.status === 'escalated' || loading}
-                className="flex-1 bg-[#090D16] border border-[#1E293B] hover:border-cyan-500/20 focus:border-cyan-400 text-sm text-white px-4 py-3 rounded-xl outline-none transition-all duration-200 disabled:opacity-40"
+                className="flex-1 bg-zinc-950 border border-zinc-800 focus:border-zinc-600 text-zinc-200 px-5 py-3.5 rounded-2xl outline-none disabled:opacity-50"
               />
 
               <button
                 type="submit"
                 disabled={!inputText.trim() || activeConv.status === 'escalated' || loading}
-                className="bg-gradient-to-tr from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white p-3 rounded-xl font-semibold shadow-lg shadow-cyan-950/40 disabled:opacity-30 disabled:pointer-events-none transition-all duration-200"
+                className="bg-white text-zinc-950 px-6 rounded-2xl font-medium disabled:opacity-40 hover:bg-zinc-200 transition-all flex items-center justify-center"
               >
                 <Send className="w-4 h-4" />
               </button>
@@ -421,16 +386,15 @@ export default function ChatView() {
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-            <div className="bg-[#0F172A] border border-[#1E293B] p-4 rounded-2xl text-cyan-400 mb-4 shadow-lg">
-              <MessageSquare className="w-8 h-8" />
-            </div>
-            <h4 className="text-white font-bold text-lg">No Conversation Selected</h4>
-            <p className="text-sm text-gray-400 max-w-sm mt-1">Select an active chat from the sidebar, or click below to launch a new automated customer assistance flow.</p>
+            <MessageSquare className="w-12 h-12 text-zinc-700 mb-6" />
+            <h4 className="text-white font-semibold text-xl">No Conversation Selected</h4>
+            <p className="text-zinc-500 mt-2 max-w-xs">Select a chat from the list or start a new one.</p>
             <button
               onClick={startNewConversation}
-              className="mt-5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-6 py-2.5 rounded-lg shadow-md transition-all duration-200"
+              className="mt-6 bg-white text-zinc-950 px-6 py-2.5 rounded-2xl font-medium hover:bg-zinc-100 transition-all flex items-center gap-2"
             >
-              Start New Flow
+              <Plus className="w-4 h-4" />
+              New Conversation
             </button>
           </div>
         )}
@@ -438,99 +402,53 @@ export default function ChatView() {
 
       {/* RIGHT PANEL: RAG Context & Citations */}
       {activeConv && (
-        <div className="w-80 border-l border-[#1E293B] bg-[#0E1424] p-4 flex flex-col h-full shrink-0 overflow-y-auto">
-          <h3 className="font-bold text-white text-xs uppercase tracking-wider mb-4 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-cyan-400" />
-            RAG Retriever Agent
+        <div className="w-80 border-l border-zinc-800 bg-zinc-900 p-6 flex flex-col h-full overflow-y-auto shrink-0">
+          <h3 className="uppercase text-xs tracking-widest font-semibold text-zinc-400 mb-6 flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+            RAG Retriever
           </h3>
 
-          <div className="space-y-4">
-            <div className="bg-[#090D16] border border-[#1E293B] p-4 rounded-xl">
-              <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest block mb-2">Retrieval Strategy</span>
-              <p className="text-xs text-gray-400 leading-relaxed">The AI agent auto-queries the Knowledge Base FAQ and injects specific paragraphs into the system prompt context on each turn.</p>
+          <div className="space-y-6">
+            <div className="bg-zinc-950 border border-zinc-800 p-5 rounded-3xl">
+              <div className="text-xs font-mono text-cyan-400 mb-3 tracking-widest">STRATEGY</div>
+              <p className="text-sm text-zinc-400">The agent queries the knowledge base and injects relevant context before generating each reply.</p>
             </div>
 
-            {/* Conversation Strategy Engine UI Card */}
-            <div className="bg-[#090D16] border border-[#1E293B] p-4 rounded-xl">
-              <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest block mb-3 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-                Active Support Strategy
-              </span>
-              
+            {/* Active Strategy */}
+            <div className="bg-zinc-950 border border-zinc-800 p-5 rounded-3xl">
+              <div className="text-xs font-mono text-emerald-400 mb-4 flex items-center gap-2 tracking-widest">
+                ACTIVE STRATEGY
+              </div>
               {activeStrategy ? (
-                <div className="space-y-3">
+                <div className="space-y-5 text-sm">
                   <div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Strategy Type:</span>
-                    <div className="text-xs font-semibold px-2 py-1 bg-emerald-950/40 text-emerald-400 border border-emerald-800/20 rounded-md inline-block">
-                      {activeStrategy.strategyType}
-                    </div>
+                    <div className="text-zinc-500 text-xs mb-1">TYPE</div>
+                    <div className="font-medium text-white">{activeStrategy.strategyType}</div>
                   </div>
-
                   <div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Reasoning:</span>
-                    <p className="text-[11px] text-gray-300 leading-relaxed bg-[#0E1424] p-2 rounded border border-[#1E293B]/60">
-                      {activeStrategy.reasoning}
-                    </p>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">Recommended Tactics:</span>
-                    <ul className="space-y-1 bg-[#0E1424] p-2 rounded border border-[#1E293B]/60">
-                      {activeStrategy.recommendedTactics.map((tactic, idx) => (
-                        <li key={idx} className="text-[10px] text-gray-300 flex items-start gap-1.5">
-                          <span className="text-emerald-400 font-bold mt-0.5">•</span>
-                          <span>{tactic}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="border-t border-[#1E293B] pt-3 mt-3">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Milestone Goals:</span>
-                    <ul className="space-y-2">
-                      {activeStrategy.goals.map((goal, idx) => (
-                        <li key={idx} className="flex items-center justify-between text-[11px] bg-[#0E1424] px-2.5 py-1.5 rounded border border-[#1E293B]/60">
-                          <span className={goal.achieved ? 'text-gray-500 line-through font-medium' : 'text-gray-300 font-medium'}>
-                            {goal.description}
-                          </span>
-                          <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide shrink-0 ${
-                            goal.achieved 
-                              ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-800/20' 
-                              : 'bg-amber-950/40 text-amber-400 border border-amber-800/20'
-                          }`}>
-                            {goal.achieved ? 'Done' : 'Pending'}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="text-zinc-500 text-xs mb-1">REASONING</div>
+                    <p className="text-zinc-300 text-sm leading-relaxed border-l border-emerald-900 pl-3">{activeStrategy.reasoning}</p>
                   </div>
                 </div>
               ) : (
-                <div className="text-xs text-gray-500 italic py-3 text-center bg-[#0E1424] rounded-lg border border-[#1E293B]/40">
-                  Send a message to let the strategy engine determine the optimal support path.
-                </div>
+                <p className="text-zinc-500 text-sm italic">Send a message to activate strategy engine</p>
               )}
             </div>
 
-            <div className="bg-[#090D16] border border-[#1E293B] p-4 rounded-xl">
-              <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest block mb-2.5 flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5" />
-                Retrieved Context Sources
-              </span>
-              
+            {/* Retrieved Sources */}
+            <div className="bg-zinc-950 border border-zinc-800 p-5 rounded-3xl">
+              <div className="text-xs font-mono text-indigo-400 mb-4 tracking-widest">RETRIEVED SOURCES</div>
               {retrievedSources.length > 0 ? (
                 <div className="space-y-2">
                   {retrievedSources.map((src, i) => (
-                    <div key={i} className="bg-[#0E1424] border border-[#1E293B] p-2.5 rounded-lg flex items-center gap-2">
-                      <FileText className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                      <span className="text-xs text-gray-200 truncate font-semibold">{src}</span>
+                    <div key={i} className="text-xs bg-zinc-900 border border-zinc-800 p-3 rounded-2xl text-zinc-400 flex items-start gap-3">
+                      <FileText className="w-4 h-4 mt-0.5 text-zinc-500" />
+                      {src}
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-xs text-gray-500 italic py-2 text-center bg-[#0E1424] rounded-lg border border-[#1E293B]/40">
-                  No sources active in this step. Send a query to fetch facts.
-                </div>
+                <p className="text-xs text-zinc-500 italic">No sources retrieved yet.</p>
               )}
             </div>
           </div>
@@ -539,48 +457,40 @@ export default function ChatView() {
 
       {/* FEEDBACK SATISFACTION MODAL */}
       {showFeedbackModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0F172A] border border-[#1E293B] p-6 rounded-2xl w-full max-w-md shadow-2xl relative">
-            <h3 className="font-bold text-white text-lg">Rate Your Experience</h3>
-            <p className="text-xs text-gray-400 mt-1">Please help us optimize our automated support prompts by providing feedback.</p>
-
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60]">
+          <div className="bg-zinc-900 border border-zinc-800 w-full max-w-md rounded-3xl p-8">
             {feedbackSubmitted ? (
-              <div className="my-8 text-center text-emerald-400 font-bold flex flex-col items-center gap-2 animate-bounce">
-                <CheckCircle className="w-8 h-8 text-emerald-400" />
-                Thank you for your rating!
+              <div className="py-12 text-center">
+                <CheckCircle className="mx-auto w-12 h-12 text-emerald-400 mb-6" />
+                <h3 className="font-semibold text-xl text-white">Thank you!</h3>
+                <p className="text-zinc-400 mt-2">Your feedback has been recorded.</p>
               </div>
             ) : (
               <>
-                <div className="flex items-center justify-center gap-2 my-6">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      onClick={() => setRating(star)}
-                      className="p-1 hover:scale-110 transition-all duration-100"
-                    >
-                      <Star className={`w-8 h-8 ${rating >= star ? 'text-amber-400 fill-amber-400' : 'text-gray-600'}`} />
+                <h3 className="text-xl font-semibold text-white mb-1">How was your experience?</h3>
+                <p className="text-sm text-zinc-400 mb-6">Help us improve our AI support.</p>
+
+                <div className="flex justify-center gap-3 my-8">
+                  {[1,2,3,4,5].map((s) => (
+                    <button key={s} onClick={() => setRating(s)} className="transition-transform hover:scale-110">
+                      <Star className={`w-9 h-9 ${rating >= s ? 'text-amber-400 fill-amber-400' : 'text-zinc-700'}`} />
                     </button>
                   ))}
                 </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-xs text-gray-400 font-medium block mb-1">Additional Feedback (Optional)</label>
-                    <textarea
-                      value={feedbackText}
-                      onChange={(e) => setFeedbackText(e.target.value)}
-                      placeholder="How can we improve?"
-                      className="w-full bg-[#090D16] border border-[#1E293B] rounded-xl p-3 text-sm text-white outline-none focus:border-cyan-400 h-24 resize-none"
-                    />
-                  </div>
+                <textarea
+                  value={feedbackText}
+                  onChange={(e) => setFeedbackText(e.target.value)}
+                  placeholder="Any additional thoughts?"
+                  className="w-full bg-zinc-950 border border-zinc-800 focus:border-zinc-600 rounded-2xl p-4 text-sm h-28 text-zinc-200 outline-none mb-6"
+                />
 
-                  <button
-                    onClick={submitFeedback}
-                    className="w-full bg-gradient-to-tr from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-bold py-2.5 rounded-xl text-sm transition-all duration-150"
-                  >
-                    Submit CSAT
-                  </button>
-                </div>
+                <button
+                  onClick={submitFeedback}
+                  className="w-full py-3.5 bg-white text-zinc-950 font-medium rounded-2xl hover:bg-zinc-100 transition-all"
+                >
+                  Submit Feedback
+                </button>
               </>
             )}
           </div>

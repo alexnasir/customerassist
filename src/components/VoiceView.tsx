@@ -349,103 +349,101 @@ export default function VoiceView() {
   };
 
   return (
-    <div className="flex-1 bg-[#090D16] p-8 overflow-y-auto flex flex-col md:flex-row gap-8" id="voice-view">
+    <div className="flex-1 bg-zinc-950 p-8 overflow-y-auto flex flex-col md:flex-row gap-8" id="voice-view">
       {/* LEFT: Central Voice Console */}
-      <div className="flex-1 bg-[#0F172A] border border-[#1E293B] rounded-2xl p-8 flex flex-col items-center justify-center relative min-h-[500px]">
+      <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-3xl p-10 flex flex-col items-center justify-center relative min-h-[520px]">
         {/* Dynamic status tag */}
-        <span className={`absolute top-6 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${
+        <span className={`absolute top-8 px-4 py-1 rounded-full text-xs font-mono uppercase tracking-[0.5px] flex items-center gap-1.5 border ${
           voiceStatus === 'recording' 
-            ? 'bg-rose-950/60 text-rose-400 animate-pulse border border-rose-800/30'
+            ? 'bg-rose-950 text-rose-400 border-rose-900/50'
             : voiceStatus === 'speaking' 
-              ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/30'
+              ? 'bg-emerald-950 text-emerald-400 border-emerald-900/50'
               : voiceStatus === 'processing'
-                ? 'bg-amber-950/60 text-amber-400 border border-amber-800/30'
-                : 'bg-[#1E293B] text-gray-400'
+                ? 'bg-amber-950 text-amber-400 border-amber-900/50'
+                : 'bg-zinc-800 text-zinc-400 border-zinc-700'
         }`}>
           <Activity className="w-3.5 h-3.5" />
-          Status: {voiceStatus === 'idle' ? 'Idle' : voiceStatus}
+          {voiceStatus.toUpperCase()}
         </span>
 
         {/* Beautiful Pulsing Waveform Ring */}
         <div className="my-12 relative flex items-center justify-center">
           {voiceStatus === 'recording' && (
             <>
-              <div className="absolute w-44 h-44 bg-rose-500/10 rounded-full animate-ping"></div>
-              <div className="absolute w-36 h-36 bg-rose-500/20 rounded-full animate-ping" style={{ animationDelay: '0.2s' }}></div>
+              <div className="absolute w-52 h-52 bg-rose-500/10 rounded-full animate-ping" />
+              <div className="absolute w-40 h-40 bg-rose-500/20 rounded-full animate-ping" style={{ animationDelay: '280ms' }} />
             </>
           )}
           {voiceStatus === 'speaking' && (
             <>
-              <div className="absolute w-44 h-44 bg-emerald-500/10 rounded-full animate-pulse"></div>
-              <div className="absolute w-36 h-36 bg-emerald-500/20 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+              <div className="absolute w-52 h-52 bg-emerald-500/10 rounded-full animate-pulse" />
+              <div className="absolute w-40 h-40 bg-emerald-500/20 rounded-full animate-pulse" style={{ animationDelay: '280ms' }} />
             </>
           )}
           {voiceStatus === 'processing' && (
-            <div className="absolute w-40 h-40 border-4 border-dashed border-cyan-500/30 rounded-full animate-spin"></div>
+            <div className="absolute w-48 h-48 border-4 border-zinc-700 border-t-zinc-400 rounded-full animate-spin" />
           )}
 
           <button
             onClick={handleMicrophoneClick}
-            className={`w-28 h-28 rounded-full flex items-center justify-center shadow-2xl relative z-10 transition-all duration-300 ${
+            className={`relative z-10 w-32 h-32 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 border-4 border-zinc-800 ${
               voiceStatus === 'recording'
-                ? 'bg-rose-600 text-white hover:bg-rose-500'
+                ? 'bg-rose-600 hover:bg-rose-500'
                 : voiceStatus === 'speaking'
-                  ? 'bg-emerald-600 text-white hover:bg-emerald-500'
-                  : 'bg-gradient-to-tr from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white'
+                  ? 'bg-emerald-600 hover:bg-emerald-500'
+                  : 'bg-white text-zinc-950 hover:bg-zinc-100'
             }`}
           >
-            {voiceStatus === 'recording' ? <MicOff className="w-10 h-10" /> : <Mic className="w-10 h-10" />}
+            {voiceStatus === 'recording' ? <MicOff className="w-12 h-12" /> : <Mic className="w-12 h-12" />}
           </button>
         </div>
 
         {/* Quick Instructions / Guidance */}
-        <div className="text-center max-w-sm mb-6">
-          <p className="text-white font-bold text-sm">
-            {voiceStatus === 'idle' && 'Click the microphone to start speaking'}
-            {voiceStatus === 'recording' && 'Listening... Click again when finished'}
-            {voiceStatus === 'processing' && 'Synthesizing voice transcription...'}
-            {voiceStatus === 'speaking' && 'Duka Letu Agent is reading response audio...'}
+        <div className="text-center max-w-sm">
+          <p className="text-zinc-200 font-medium">
+            {voiceStatus === 'idle' && 'Click the microphone to begin conversation'}
+            {voiceStatus === 'recording' && 'Listening — click again to send'}
+            {voiceStatus === 'processing' && 'Processing your request...'}
+            {voiceStatus === 'speaking' && 'Agent is speaking...'}
           </p>
-          <p className="text-xs text-gray-400 mt-1">
-            Toggle English or Swahili support below. Responses will be synthesized in your selected dialect instantly.
+          <p className="text-xs text-zinc-500 mt-2">
+            Supports real-time English and Kiswahili voice interaction.
           </p>
         </div>
 
         {/* Language & Voice Selector */}
-        <div className="w-full max-w-md bg-[#090D16] border border-[#1E293B] p-4 rounded-xl flex gap-4">
-          <div className="flex-1">
-            <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-1">Select Language</label>
-            <div className="flex bg-[#0F172A] p-1 rounded-lg border border-[#1E293B]">
-              <button
-                onClick={() => setSelectedLanguage('en')}
-                className={`flex-1 text-xs font-semibold py-1.5 rounded transition-all duration-150 ${
-                  selectedLanguage === 'en' ? 'bg-cyan-600 text-white shadow-md' : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                English
-              </button>
-              <button
-                onClick={() => setSelectedLanguage('sw')}
-                className={`flex-1 text-xs font-semibold py-1.5 rounded transition-all duration-150 ${
-                  selectedLanguage === 'sw' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                Kiswahili
-              </button>
+        <div className="w-full max-w-md mt-10 bg-zinc-950 border border-zinc-800 p-6 rounded-3xl">
+          <div className="flex gap-6">
+            <div className="flex-1">
+              <label className="block text-xs font-mono uppercase tracking-widest text-zinc-500 mb-2">Language</label>
+              <div className="flex bg-zinc-900 rounded-2xl p-1 border border-zinc-800">
+                <button
+                  onClick={() => setSelectedLanguage('en')}
+                  className={`flex-1 py-3 text-sm font-medium rounded-xl transition-all ${selectedLanguage === 'en' ? 'bg-white text-zinc-950 shadow' : 'text-zinc-400'}`}
+                >
+                  English
+                </button>
+                <button
+                  onClick={() => setSelectedLanguage('sw')}
+                  className={`flex-1 py-3 text-sm font-medium rounded-xl transition-all ${selectedLanguage === 'sw' ? 'bg-white text-zinc-950 shadow' : 'text-zinc-400'}`}
+                >
+                  Kiswahili
+                </button>
+              </div>
             </div>
-          </div>
 
-          <div className="flex-1">
-            <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-1">Prebuilt Voice</label>
-            <select
-              value={selectedVoice}
-              onChange={(e) => setSelectedVoice(e.target.value)}
-              className="w-full bg-[#0F172A] text-xs font-semibold text-white px-3 py-2 rounded-lg border border-[#1E293B] outline-none"
-            >
-              <option value="Zephyr">Zephyr (Mellow Male)</option>
-              <option value="Kore">Kore (Polite Female)</option>
-              <option value="Puck">Puck (Cheerful Pitch)</option>
-            </select>
+            <div className="flex-1">
+              <label className="block text-xs font-mono uppercase tracking-widest text-zinc-500 mb-2">Voice</label>
+              <select
+                value={selectedVoice}
+                onChange={(e) => setSelectedVoice(e.target.value)}
+                className="w-full bg-zinc-900 border border-zinc-800 text-sm text-white px-4 py-3 rounded-2xl outline-none"
+              >
+                <option value="Zephyr">Zephyr (Mellow Male)</option>
+                <option value="Kore">Kore (Polite Female)</option>
+                <option value="Puck">Puck (Cheerful Pitch)</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -454,76 +452,70 @@ export default function VoiceView() {
           ref={audioRef} 
           className="hidden" 
           onEnded={() => setVoiceStatus('idle')}
-          onError={(e) => {
-            console.warn('[VoiceView] HTMLAudioElement emitted an error (playback event failed)');
-            setVoiceStatus('idle');
-          }}
+          onError={() => setVoiceStatus('idle')}
         />
       </div>
 
       {/* RIGHT: Real-time Transcript & Suggested Scenarios */}
       <div className="w-full md:w-96 flex flex-col gap-6 shrink-0">
         {/* Real-time Transcription Log */}
-        <div className="bg-[#0F172A] border border-[#1E293B] rounded-2xl p-6 flex-1 flex flex-col min-h-[250px]">
-          <h4 className="font-bold text-white text-xs uppercase tracking-wider mb-4 flex items-center gap-1.5">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-7 flex-1 flex flex-col">
+          <h4 className="font-semibold text-white flex items-center gap-2 mb-5">
             <Activity className="w-4 h-4 text-cyan-400" />
             Live Dialogue Console
           </h4>
 
           {errorMsg && (
-            <div className="bg-rose-950/20 border border-rose-900/30 text-rose-400 text-xs p-3 rounded-xl flex items-start gap-2 mb-4">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>{errorMsg}</span>
+            <div className="mb-6 bg-rose-950/30 border border-rose-900/50 text-rose-400 p-4 rounded-2xl flex gap-3 text-sm">
+              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+              {errorMsg}
             </div>
           )}
 
-          <div className="space-y-4 flex-1 overflow-y-auto">
+          <div className="flex-1 space-y-6 overflow-y-auto pr-1">
             {userTranscript && (
-              <div className="bg-[#090D16] border border-[#1E293B] p-3.5 rounded-xl">
-                <span className="text-[9px] font-bold text-cyan-400 uppercase tracking-wider block mb-1">You</span>
-                <p className="text-xs text-white leading-relaxed font-medium">{userTranscript}</p>
+              <div className="bg-zinc-950 border border-zinc-800 p-5 rounded-2xl">
+                <div className="text-cyan-400 text-xs font-mono tracking-widest mb-2">YOU</div>
+                <p className="text-zinc-100 text-sm leading-relaxed">{userTranscript}</p>
               </div>
             )}
 
             {aiResponseText && (
-              <div className="bg-[#090D16] border border-[#1E293B] p-3.5 rounded-xl">
-                <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-wider block mb-1 flex items-center gap-1">
-                  Duka Letu Agent
-                </span>
-                <p className="text-xs text-gray-300 leading-relaxed font-medium">{aiResponseText}</p>
+              <div className="bg-zinc-950 border border-zinc-800 p-5 rounded-2xl">
+                <div className="text-emerald-400 text-xs font-mono tracking-widest mb-2">DUKA LETU AGENT</div>
+                <p className="text-zinc-200 text-sm leading-relaxed">{aiResponseText}</p>
               </div>
             )}
 
             {!userTranscript && !aiResponseText && (
-              <div className="text-center text-gray-500 py-12 italic text-xs">
-                No active dialogue streams. Turn on the mic or trigger a suggested scenario below to test voice conversion logs.
+              <div className="h-full flex items-center justify-center text-center text-zinc-500 text-sm py-10">
+                Your conversation will appear here
               </div>
             )}
           </div>
-
         </div>
 
         {/* Suggested Scenarios */}
-        <div className="bg-[#0F172A] border border-[#1E293B] rounded-2xl p-6">
-          <h4 className="font-bold text-white text-xs uppercase tracking-wider mb-3 flex items-center gap-1.5">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-7">
+          <h4 className="font-semibold text-white flex items-center gap-2 mb-2">
             <Compass className="w-4 h-4 text-cyan-400" />
-            Click-to-Speak Scenarios
+            Quick Scenarios
           </h4>
-          <p className="text-[11px] text-gray-400 mb-4 leading-relaxed">Don't want to use your mic? Click any query below to run the Duka Letu Agent Multilingual TTS & RAG loop instantly.</p>
+          <p className="text-xs text-zinc-500 mb-6">Click any example to instantly run a full voice interaction flow.</p>
           
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {voicePrompts.map((prompt, i) => (
               <button
                 key={i}
                 onClick={() => selectSuggestedPrompt(prompt)}
-                className="w-full text-left bg-[#090D16] hover:bg-[#111A2D] border border-[#1E293B] p-3 rounded-xl transition-all duration-150 flex items-center gap-3 group"
+                className="group w-full flex items-center gap-4 bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 hover:border-zinc-700 p-5 rounded-2xl transition-all text-left"
               >
-                <span className="text-lg bg-[#0F172A] p-1.5 rounded border border-[#1E293B] leading-none shrink-0">{prompt.icon}</span>
+                <div className="text-2xl bg-zinc-900 px-3 py-2 rounded-2xl border border-zinc-800">{prompt.icon}</div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-white truncate leading-tight">{prompt.text}</p>
-                  <span className="text-[9px] text-cyan-400 font-bold uppercase tracking-wider mt-1 block">Language: {prompt.lang}</span>
+                  <p className="text-sm text-zinc-200 line-clamp-1 group-hover:text-white">{prompt.text}</p>
+                  <p className="text-xs text-zinc-500 font-mono mt-1">{prompt.lang.toUpperCase()}</p>
                 </div>
-                <Play className="w-3.5 h-3.5 text-cyan-400 opacity-0 group-hover:opacity-100 transition-all duration-150 shrink-0" />
+                <Play className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" />
               </button>
             ))}
           </div>

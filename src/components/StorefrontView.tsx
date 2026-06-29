@@ -601,49 +601,49 @@ export default function StorefrontView({ onLogout }: StorefrontViewProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#060813] text-gray-100 font-sans flex flex-col relative overflow-x-hidden pb-12">
+    <div className="min-h-screen bg-zinc-950 text-zinc-200 font-sans flex flex-col relative overflow-x-hidden pb-12">
       {/* Hidden fallback HTML5 audio element */}
       <audio ref={audioRef} className="hidden" />
 
       {/* Modern High-Contrast Store Header */}
-      <header className="sticky top-0 z-40 bg-[#0A0E1A]/90 backdrop-blur-md border-b border-[#1E293B] shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-40 bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           
           {/* Brand logo */}
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-tr from-cyan-600 to-indigo-600 rounded-xl flex items-center justify-center border border-cyan-500/30">
-              <ShoppingBag className="w-5 h-5 text-white" />
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-zinc-900 rounded-xl flex items-center justify-center border border-zinc-700">
+              <ShoppingBag className="w-5 h-5 text-zinc-100" />
             </div>
             <div>
-              <span className="text-lg font-black tracking-tight text-white block">Duka Letu</span>
-              <span className="text-[10px] uppercase font-bold tracking-widest text-cyan-400">Authentic Storefront</span>
+              <span className="text-lg font-semibold tracking-tighter text-white">Duka Letu</span>
+              <span className="text-[10px] uppercase font-mono tracking-[0.5px] text-zinc-500">Authentic Storefront</span>
             </div>
           </div>
 
           {/* Search bar */}
           <div className="hidden md:flex items-center flex-1 max-w-md relative">
-            <Search className="absolute left-3.5 top-3 w-4 h-4 text-gray-500" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
             <input 
               type="text" 
               placeholder="Search coffee, handwoven crafts, exotic spices..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#05070C] border border-[#1E293B] hover:border-[#334155] focus:border-cyan-400 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white outline-none transition-all duration-150 shadow-inner"
+              className="w-full bg-zinc-900 border border-zinc-800 hover:border-zinc-700 focus:border-zinc-600 rounded-xl pl-10 pr-4 py-2.5 text-sm text-zinc-200 outline-none transition-all"
             />
           </div>
 
           {/* Interactive Right utility menu */}
           <div className="flex items-center gap-4">
-            <span className="text-xs text-gray-400 bg-cyan-950/20 border border-cyan-900/30 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5">
+            <span className="text-xs text-zinc-400 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               Inquiry Guest Role
             </span>
 
             <div className="relative">
-              <div className="p-2.5 bg-[#0D1120] border border-[#1E293B] rounded-xl hover:bg-[#151B2F] transition-all duration-150 cursor-pointer text-gray-300 relative">
+              <div className="p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl hover:bg-zinc-800 transition-colors cursor-pointer text-zinc-300">
                 <ShoppingBag className="w-4 h-4" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-cyan-500 text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center animate-bounce shadow-md">
+                  <span className="absolute -top-1 -right-1 bg-zinc-100 text-zinc-950 text-[10px] font-mono w-4 h-4 rounded-full flex items-center justify-center">
                     {cartCount}
                   </span>
                 )}
@@ -652,7 +652,7 @@ export default function StorefrontView({ onLogout }: StorefrontViewProps) {
 
             <button 
               onClick={onLogout}
-              className="flex items-center gap-1.5 bg-rose-950/20 hover:bg-rose-900/30 text-rose-400 text-xs font-bold px-3.5 py-2.5 rounded-xl border border-rose-900/30 transition-all duration-150 cursor-pointer"
+              className="flex items-center gap-2 text-sm text-zinc-400 hover:text-zinc-200 transition-colors px-4 py-2 rounded-xl hover:bg-zinc-900 border border-transparent hover:border-zinc-800"
             >
               <LogOut className="w-4 h-4" />
               <span>Back to Panel</span>
@@ -665,23 +665,21 @@ export default function StorefrontView({ onLogout }: StorefrontViewProps) {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-1 mt-8 w-full">
         
         {/* Aesthetic Banner */}
-        <div className="bg-gradient-to-r from-[#0D1120] via-[#090D18] to-[#121A30] border border-[#1E293B] rounded-2xl p-8 mb-10 shadow-2xl relative overflow-hidden">
-          <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none"></div>
-          
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 mb-10 relative overflow-hidden">
           <div className="max-w-xl relative z-10">
-            <span className="text-[10px] font-bold tracking-widest text-cyan-400 uppercase bg-cyan-950/30 px-2.5 py-1 rounded border border-cyan-900/30 inline-block mb-3">
+            <span className="text-xs font-mono tracking-widest text-zinc-500 uppercase mb-3 inline-block">
               Multilingual Widget Sandbox
             </span>
-            <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight leading-none mb-3">
+            <h1 className="text-3xl font-semibold tracking-tighter text-white mb-4">
               East Africa's Finest Crafts & Aromas
             </h1>
-            <p className="text-xs text-gray-400 leading-relaxed mb-5">
+            <p className="text-sm text-zinc-400 leading-relaxed mb-6">
               Explore our boutique products. In the bottom right corner, you will find the <b>Duka Letu Floating Help Assistant</b>—the exact live widget integrated for website visitors! Click it to inquire about shipping, coffee origins, and return policies in English or Kiswahili.
             </p>
             <div className="flex items-center gap-3">
               <button 
                 onClick={() => setIsWidgetOpen(true)}
-                className="bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-bold px-4 py-3 rounded-xl transition-all duration-150 flex items-center gap-1.5 shadow-lg cursor-pointer"
+                className="bg-white hover:bg-zinc-100 text-zinc-950 text-sm font-medium px-6 py-2.5 rounded-xl transition-all flex items-center gap-2 shadow-sm"
               >
                 <MessageSquare className="w-4 h-4" />
                 <span>Test Live Widget Now</span>
@@ -691,15 +689,15 @@ export default function StorefrontView({ onLogout }: StorefrontViewProps) {
         </div>
 
         {/* Filter categories tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-6">
+        <div className="flex items-center gap-2 overflow-x-auto pb-6 mb-8 border-b border-zinc-800">
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all duration-150 whitespace-nowrap cursor-pointer ${
+              className={`px-5 py-1.5 rounded-full text-sm font-medium border transition-all whitespace-nowrap ${
                 selectedCategory === cat
-                  ? 'bg-cyan-950/40 text-cyan-400 border-cyan-800/50 shadow-inner'
-                  : 'bg-[#0D1120] hover:bg-[#151B2F] text-gray-400 border-[#1E293B]'
+                  ? 'bg-white text-zinc-950 border-white'
+                  : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-400 border-zinc-800 hover:border-zinc-700'
               }`}
             >
               {cat}
@@ -712,53 +710,52 @@ export default function StorefrontView({ onLogout }: StorefrontViewProps) {
           {filteredProducts.map((prod) => (
             <div 
               key={prod.id}
-              className="bg-[#0D1120] border border-[#1E293B] rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl hover:border-cyan-500/20 transition-all duration-300 flex flex-col group"
+              className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col group hover:border-zinc-700 transition-all"
             >
               {/* Product Image Frame */}
-              <div className="relative h-48 bg-gray-950 overflow-hidden">
+              <div className="relative h-52 bg-zinc-950 overflow-hidden">
                 <img 
                   src={prod.image} 
                   alt={prod.name}
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700"
                 />
-                <span className="absolute top-3 left-3 bg-black/70 backdrop-blur-sm border border-cyan-500/20 text-cyan-400 text-[10px] font-black tracking-wider uppercase px-2.5 py-1 rounded">
+                <span className="absolute top-4 left-4 bg-zinc-950/90 text-zinc-400 text-xs font-mono tracking-widest px-3 py-1 rounded border border-zinc-700">
                   {prod.badge}
                 </span>
-                <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-transparent to-transparent opacity-80"></div>
               </div>
 
               {/* Product details */}
-              <div className="p-5 flex-1 flex flex-col justify-between">
+              <div className="p-6 flex-1 flex flex-col justify-between">
                 <div>
-                  <span className="text-[10px] font-bold text-gray-500 tracking-wider uppercase block mb-1">
+                  <span className="text-xs font-mono uppercase tracking-widest text-zinc-500 block mb-2">
                     {prod.category}
                   </span>
-                  <h3 className="text-sm font-bold text-white group-hover:text-cyan-400 transition-colors duration-150 line-clamp-1">
+                  <h3 className="font-semibold text-lg text-white group-hover:text-white transition-colors line-clamp-2">
                     {prod.name}
                   </h3>
-                  <p className="text-[11px] text-gray-400 leading-relaxed mt-2 line-clamp-3">
+                  <p className="text-sm text-zinc-400 leading-snug mt-3 line-clamp-3">
                     {prod.description}
                   </p>
                 </div>
 
-                <div className="mt-5 pt-4 border-t border-[#1E293B]/60 flex items-center justify-between">
+                <div className="mt-8 flex items-end justify-between">
                   <div>
-                    <span className="text-[10px] text-gray-500 block">Unit price</span>
-                    <span className="text-base font-black text-white">${prod.price.toFixed(2)}</span>
+                    <span className="text-xs text-zinc-500">Unit price</span>
+                    <div className="text-2xl font-semibold text-white mt-0.5">${prod.price.toFixed(2)}</div>
                   </div>
 
                   <div className="flex items-center gap-1">
-                    <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                    <span className="text-xs font-bold text-white">{prod.rating}</span>
-                    <span className="text-[10px] text-gray-500 font-medium">({prod.reviews})</span>
+                    <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                    <span className="text-sm font-medium text-white">{prod.rating}</span>
+                    <span className="text-xs text-zinc-500">({prod.reviews})</span>
                   </div>
                 </div>
 
-                <div className="mt-4">
+                <div className="mt-6">
                   <button 
                     onClick={handleAddToCart}
-                    className="w-full bg-[#151B30] hover:bg-cyan-950/30 text-gray-300 hover:text-cyan-400 border border-[#1E293B] hover:border-cyan-900/40 text-xs font-bold py-2.5 rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="w-full bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-medium py-3 rounded-xl transition-all flex items-center justify-center gap-2 border border-zinc-700 hover:border-zinc-600"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Add to Cart</span>
@@ -769,18 +766,18 @@ export default function StorefrontView({ onLogout }: StorefrontViewProps) {
           ))}
 
           {filteredProducts.length === 0 && (
-            <div className="col-span-full py-16 text-center border border-[#1E293B] border-dashed rounded-2xl bg-[#090D15]/40">
-              <p className="text-xs text-gray-500 italic">No boutique products match your active criteria.</p>
+            <div className="col-span-full py-20 text-center border border-dashed border-zinc-800 rounded-2xl bg-zinc-950">
+              <p className="text-sm text-zinc-500">No boutique products match your active criteria.</p>
             </div>
           )}
         </div>
       </main>
 
       {/* Floating Widget Button */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-8 right-8 z-50">
         <button
           onClick={() => setIsWidgetOpen(!isWidgetOpen)}
-          className={`w-14 h-14 bg-gradient-to-r from-cyan-600 to-indigo-600 rounded-full flex items-center justify-center text-white shadow-2xl border border-cyan-400/20 cursor-pointer relative group transition-transform duration-150 hover:scale-105 active:scale-95 ${
+          className={`w-14 h-14 bg-white text-zinc-950 rounded-2xl flex items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-200 cursor-pointer relative group border border-zinc-200 ${
             isWidgetOpen ? 'rotate-90' : ''
           }`}
           id="floating-widget-toggle"
@@ -790,7 +787,7 @@ export default function StorefrontView({ onLogout }: StorefrontViewProps) {
           ) : (
             <>
               <MessageSquare className="w-6 h-6" />
-              <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[8px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center shadow-lg animate-bounce">
+              <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-mono w-4 h-4 rounded-full flex items-center justify-center">
                 1
               </span>
             </>
@@ -802,69 +799,67 @@ export default function StorefrontView({ onLogout }: StorefrontViewProps) {
       <AnimatePresence>
         {isWidgetOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 30, scale: 0.92 }}
+            initial={{ opacity: 0, y: 20, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 30, scale: 0.92 }}
+            exit={{ opacity: 0, y: 20, scale: 0.98 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="fixed bottom-22 right-6 w-96 h-[520px] bg-[#0C101E] border border-[#1E293B] rounded-2xl shadow-2xl flex flex-col overflow-hidden z-50"
+            className="fixed bottom-28 right-8 w-[380px] h-[560px] bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden z-50"
             id="duka-letu-chat-widget"
           >
             {/* Widget Header */}
-            <div className="bg-gradient-to-r from-[#0C101E] to-[#12182E] px-4 py-4 border-b border-[#1E293B] flex items-center justify-between">
-              <div className="flex items-center gap-2">
+            <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-950">
+              <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="w-8 h-8 bg-cyan-950/60 rounded-lg border border-cyan-800/30 flex items-center justify-center">
-                    <Sparkles className="w-4 h-4 text-cyan-400" />
+                  <div className="w-8 h-8 bg-zinc-800 rounded-2xl flex items-center justify-center border border-zinc-700">
+                    <Sparkles className="w-4 h-4 text-zinc-400" />
                   </div>
-                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-[#0C101E]"></span>
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-[2.5px] border-zinc-950"></span>
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
-                    Duka Letu Assistant
-                  </h4>
-                  <p className="text-[9px] text-gray-500">Multilingual Chat & Voice Helper</p>
+                  <h4 className="font-medium text-sm text-white">Duka Letu Assistant</h4>
+                  <p className="text-xs text-zinc-500 -mt-0.5">Multilingual Chat & Voice Helper</p>
                 </div>
               </div>
 
               {/* Actions & Tab Switcher */}
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1">
                 <button
                   onClick={() => setWidgetTab(widgetTab === 'chat' ? 'voice' : 'chat')}
-                  className="p-1.5 text-gray-400 hover:text-cyan-400 bg-[#070913] rounded-lg border border-[#1E293B] hover:border-cyan-900/30 transition-all duration-150 cursor-pointer"
+                  className="p-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 rounded-xl transition-all cursor-pointer"
                   title={widgetTab === 'chat' ? 'Switch to Voice Assistant' : 'Switch to Chat Assistant'}
                 >
-                  {widgetTab === 'chat' ? <Mic className="w-3.5 h-3.5" /> : <MessageSquare className="w-3.5 h-3.5" />}
+                  {widgetTab === 'chat' ? <Mic className="w-4 h-4" /> : <MessageSquare className="w-4 h-4" />}
                 </button>
 
                 <button
                   onClick={handleResetWidget}
-                  className="p-1.5 text-gray-400 hover:text-cyan-400 bg-[#070913] rounded-lg border border-[#1E293B] hover:border-cyan-900/30 transition-all duration-150 cursor-pointer"
+                  className="p-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 rounded-xl transition-all cursor-pointer"
                   title="Reset conversation session"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-4 h-4" />
                 </button>
 
                 <button
                   onClick={() => setIsWidgetOpen(false)}
-                  className="p-1.5 text-gray-400 hover:text-white bg-[#070913] rounded-lg border border-[#1E293B] transition-all duration-150 cursor-pointer"
+                  className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-xl transition-all cursor-pointer"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
             {/* Widget Sub Header with Controls (Language settings, actions) */}
-            <div className="bg-[#070913] px-4 py-2 border-b border-[#1E293B]/60 flex items-center justify-between text-[10px] text-gray-400">
+            <div className="px-5 py-2.5 border-b border-zinc-800 bg-zinc-950 flex items-center justify-between text-xs text-zinc-400">
               {widgetTab === 'chat' ? (
                 <>
-                  <div className="flex items-center gap-1">
-                    <Globe className="w-3 h-3 text-cyan-400" />
+                  <div className="flex items-center gap-2">
+                    <Globe className="w-3.5 h-3.5" />
                     <span>Language Detector:</span>
                   </div>
                   <select
                     value={language}
                     onChange={(e) => setLanguage(e.target.value as any)}
-                    className="bg-[#0C101E] border border-[#1E293B] rounded px-1.5 py-0.5 outline-none font-semibold text-white cursor-pointer"
+                    className="bg-zinc-900 border border-zinc-700 text-white rounded-lg px-3 py-1 text-xs font-medium outline-none cursor-pointer"
                   >
                     <option value="auto">Auto-Detect</option>
                     <option value="en">English (EN)</option>
@@ -873,24 +868,20 @@ export default function StorefrontView({ onLogout }: StorefrontViewProps) {
                 </>
               ) : (
                 <>
-                  <div className="flex items-center gap-1">
-                    <Globe className="w-3 h-3 text-cyan-400" />
+                  <div className="flex items-center gap-2">
+                    <Globe className="w-3.5 h-3.5" />
                     <span>Speech Language:</span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-700 rounded-lg p-0.5">
                     <button
                       onClick={() => setVoiceLang('en')}
-                      className={`px-1.5 py-0.5 rounded transition-all duration-150 font-bold ${
-                        voiceLang === 'en' ? 'bg-cyan-950/40 text-cyan-400 border border-cyan-800/30' : 'bg-transparent text-gray-500'
-                      }`}
+                      className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${voiceLang === 'en' ? 'bg-zinc-800 text-white' : 'text-zinc-400'}`}
                     >
                       EN
                     </button>
                     <button
                       onClick={() => setVoiceLang('sw')}
-                      className={`px-1.5 py-0.5 rounded transition-all duration-150 font-bold ${
-                        voiceLang === 'sw' ? 'bg-cyan-950/40 text-cyan-400 border border-cyan-800/30' : 'bg-transparent text-gray-500'
-                      }`}
+                      className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${voiceLang === 'sw' ? 'bg-zinc-800 text-white' : 'text-zinc-400'}`}
                     >
                       SW
                     </button>
@@ -900,7 +891,7 @@ export default function StorefrontView({ onLogout }: StorefrontViewProps) {
             </div>
 
             {/* Widget Main Pane */}
-            <div className="flex-1 overflow-y-auto p-4 bg-[#0A0D18]/40 relative">
+            <div className="flex-1 overflow-y-auto p-5 bg-zinc-950 relative">
               
               {/* CSAT Overlay directly in widget */}
               <AnimatePresence>
@@ -909,35 +900,35 @@ export default function StorefrontView({ onLogout }: StorefrontViewProps) {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="absolute inset-0 bg-black/90 backdrop-blur-sm z-30 p-5 flex flex-col justify-center text-center"
+                    className="absolute inset-0 bg-black/90 backdrop-blur-sm z-30 p-6 flex flex-col justify-center text-center"
                   >
                     {csatSuccess ? (
                       <motion.div
-                        initial={{ scale: 0.9 }}
+                        initial={{ scale: 0.95 }}
                         animate={{ scale: 1 }}
-                        className="space-y-2 text-center"
+                        className="space-y-3 text-center"
                       >
-                        <div className="w-12 h-12 bg-emerald-950/60 text-emerald-400 rounded-full flex items-center justify-center border border-emerald-800/30 mx-auto mb-2">
+                        <div className="w-12 h-12 bg-emerald-900/50 text-emerald-400 rounded-2xl flex items-center justify-center border border-emerald-800 mx-auto">
                           <Check className="w-6 h-6" />
                         </div>
-                        <h4 className="text-sm font-bold text-white">Thank you for your rating!</h4>
-                        <p className="text-[10px] text-gray-400">Feedback successfully logged to Supabase.</p>
+                        <h4 className="text-sm font-medium text-white">Thank you for your rating!</h4>
+                        <p className="text-xs text-zinc-400">Feedback successfully logged to Supabase.</p>
                       </motion.div>
                     ) : (
-                      <div className="space-y-4">
-                        <h4 className="text-xs font-bold text-white uppercase tracking-wider">Rate Duka Letu Support</h4>
-                        <p className="text-[10px] text-gray-400 leading-relaxed">
+                      <div className="space-y-5">
+                        <h4 className="text-sm font-medium text-white">Rate Duka Letu Support</h4>
+                        <p className="text-xs text-zinc-400">
                           Your conversation will be closed. Please rate your experience to help us improve.
                         </p>
                         
-                        <div className="flex items-center justify-center gap-2">
+                        <div className="flex items-center justify-center gap-1">
                           {[1, 2, 3, 4, 5].map((star) => (
                             <button
                               key={star}
                               onClick={() => setCsatRating(star)}
                               className="p-1 transition-all hover:scale-110 cursor-pointer"
                             >
-                              <Star className={`w-6 h-6 ${star <= csatRating ? 'text-amber-400 fill-amber-400' : 'text-gray-600'}`} />
+                              <Star className={`w-7 h-7 ${star <= csatRating ? 'text-amber-400 fill-amber-400' : 'text-zinc-700'}`} />
                             </button>
                           ))}
                         </div>
@@ -946,19 +937,19 @@ export default function StorefrontView({ onLogout }: StorefrontViewProps) {
                           placeholder="Tell us what we did well or how we can improve..."
                           value={csatFeedback}
                           onChange={(e) => setCsatFeedback(e.target.value)}
-                          className="w-full bg-[#05070C] border border-[#1E293B] focus:border-cyan-400 rounded-xl p-3 text-[11px] text-white outline-none min-h-[70px] resize-none"
+                          className="w-full bg-zinc-900 border border-zinc-700 focus:border-zinc-600 rounded-2xl p-4 text-sm text-zinc-200 outline-none min-h-[88px] resize-y"
                         />
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3 pt-2">
                           <button
                             onClick={() => setShowCsat(false)}
-                            className="flex-1 bg-[#1A1E2E] hover:bg-[#252A40] text-gray-400 text-xs py-2 rounded-xl border border-[#334155] cursor-pointer"
+                            className="flex-1 py-2.5 text-sm text-zinc-400 hover:text-zinc-200 border border-zinc-700 hover:border-zinc-600 rounded-2xl transition-all"
                           >
                             Cancel
                           </button>
                           <button
                             onClick={handleCsatSubmit}
-                            className="flex-1 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white text-xs py-2 rounded-xl shadow-lg cursor-pointer font-bold"
+                            className="flex-1 py-2.5 bg-white text-zinc-950 text-sm font-medium rounded-2xl transition-all hover:bg-zinc-100"
                           >
                             Submit Rating
                           </button>
@@ -971,15 +962,15 @@ export default function StorefrontView({ onLogout }: StorefrontViewProps) {
 
               {widgetTab === 'chat' ? (
                 /* CHAT WIDGET VIEW */
-                <div className="space-y-4 h-full flex flex-col justify-between">
-                  <div className="space-y-4 overflow-y-auto flex-1 pr-1" style={{ maxHeight: '310px' }}>
+                <div className="space-y-6 h-full flex flex-col">
+                  <div className="space-y-6 overflow-y-auto flex-1 pr-1 custom-scrollbar">
                     
                     {/* Welcome message */}
-                    <div className="flex items-start gap-2 max-w-[85%]">
-                      <div className="w-6 h-6 bg-cyan-950/40 text-cyan-400 rounded-lg border border-cyan-900/30 flex items-center justify-center text-[10px] font-bold">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 bg-zinc-800 text-zinc-400 rounded-2xl flex items-center justify-center text-xs font-medium border border-zinc-700 flex-shrink-0">
                         AI
                       </div>
-                      <div className="bg-[#151B2F]/60 border border-[#1E293B]/60 rounded-2xl p-3 text-[11px] text-gray-300 leading-relaxed shadow-sm">
+                      <div className="bg-zinc-800 border border-zinc-700 rounded-3xl px-4 py-3 text-sm text-zinc-200">
                         Habari! Hello! Welcome to <b>Duka Letu</b>. I can assist you with orders, shipping info, or products. How can I help today?
                       </div>
                     </div>
@@ -989,19 +980,19 @@ export default function StorefrontView({ onLogout }: StorefrontViewProps) {
                       return (
                         <div
                           key={msg.id}
-                          className={`flex items-start gap-2 max-w-[85%] ${isUser ? 'ml-auto flex-row-reverse' : ''}`}
+                          className={`flex items-start gap-3 ${isUser ? 'flex-row-reverse' : ''}`}
                         >
-                          <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold ${
+                          <div className={`w-8 h-8 rounded-2xl flex items-center justify-center text-xs font-medium border flex-shrink-0 ${
                             isUser 
-                              ? 'bg-indigo-950/40 text-indigo-400 border border-indigo-900/30' 
-                              : 'bg-cyan-950/40 text-cyan-400 border border-cyan-900/30'
+                              ? 'bg-zinc-700 text-zinc-300 border-zinc-600' 
+                              : 'bg-zinc-800 text-zinc-400 border-zinc-700'
                           }`}>
                             {isUser ? 'ME' : 'AI'}
                           </div>
-                          <div className={`p-3 rounded-2xl text-[11px] leading-relaxed border ${
+                          <div className={`px-4 py-3 rounded-3xl text-sm max-w-[80%] leading-relaxed border ${
                             isUser
-                              ? 'bg-indigo-950/20 border-indigo-900/30 text-indigo-200'
-                              : 'bg-[#151B2F]/40 border-[#1E293B]/40 text-gray-300'
+                              ? 'bg-zinc-700 border-zinc-600 text-zinc-100'
+                              : 'bg-zinc-800 border-zinc-700 text-zinc-200'
                           }`}>
                             {msg.content}
                           </div>
@@ -1010,8 +1001,8 @@ export default function StorefrontView({ onLogout }: StorefrontViewProps) {
                     })}
 
                     {loading && (
-                      <div className="flex items-center gap-2 text-[10px] text-gray-500 italic">
-                        <RefreshCw className="w-3 h-3 animate-spin text-cyan-400" />
+                      <div className="flex items-center gap-2.5 text-sm text-zinc-500 pl-11">
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                         <span>Duka Letu Assistant is processing...</span>
                       </div>
                     )}
@@ -1021,16 +1012,16 @@ export default function StorefrontView({ onLogout }: StorefrontViewProps) {
 
                   {/* Suggestion Chips */}
                   {messages.length === 0 && !loading && (
-                    <div className="space-y-1.5 mt-auto">
-                      <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                    <div className="pt-2">
+                      <span className="text-xs font-mono uppercase tracking-widest text-zinc-500 block mb-3 pl-1">
                         Frequently Asked Questions:
                       </span>
-                      <div className="flex flex-wrap gap-1.5">
+                      <div className="flex flex-wrap gap-2">
                         {SUGGESTED_INQUIRIES.map((chip, i) => (
                           <button
                             key={i}
                             onClick={() => handleSendMessage(chip.text)}
-                            className="bg-[#0D1120] hover:bg-[#1A223B] border border-[#1E293B] text-[10px] text-gray-300 px-2.5 py-1.5 rounded-xl transition-all duration-150 text-left flex items-center gap-1 cursor-pointer hover:border-cyan-900/40"
+                            className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-zinc-600 text-sm text-zinc-300 px-4 py-2 rounded-2xl transition-all text-left flex items-center gap-2"
                           >
                             <span>{chip.icon}</span>
                             <span>{chip.text}</span>
@@ -1043,58 +1034,58 @@ export default function StorefrontView({ onLogout }: StorefrontViewProps) {
               ) : (
                 /* VOICE WIDGET VIEW */
                 <div className="h-full flex flex-col justify-between py-2">
-                  <div className="text-center space-y-4">
-                    <span className="text-[10px] uppercase tracking-widest text-cyan-400 font-bold block">
+                  <div className="text-center space-y-6 pt-6">
+                    <span className="text-xs font-mono uppercase tracking-[1px] text-zinc-400 block">
                       Interactive Voice Mode
                     </span>
                     
                     {/* Pulsing micro voice module */}
-                    <div className="flex items-center justify-center py-6">
+                    <div className="flex items-center justify-center py-8">
                       <div className="relative">
                         <AnimatePresence>
                           {voiceStatus === 'recording' && (
                             <motion.div 
                               initial={{ opacity: 0, scale: 0.8 }}
-                              animate={{ opacity: [0.4, 0.1, 0.4], scale: [1, 2, 1] }}
+                              animate={{ opacity: [0.6, 0.2, 0.6], scale: [1, 1.8, 1] }}
                               exit={{ opacity: 0, scale: 0.8 }}
-                              transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
-                              className="absolute inset-0 bg-red-500 rounded-full"
+                              transition={{ repeat: Infinity, duration: 1.4 }}
+                              className="absolute inset-0 bg-rose-500/30 rounded-full"
                             />
                           )}
                           {(voiceStatus === 'processing' || voiceStatus === 'speaking') && (
                             <motion.div 
                               initial={{ opacity: 0, scale: 0.8 }}
-                              animate={{ opacity: [0.4, 0.1, 0.4], scale: [1, 2, 1] }}
+                              animate={{ opacity: [0.5, 0.15, 0.5], scale: [1, 1.8, 1] }}
                               exit={{ opacity: 0, scale: 0.8 }}
-                              transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
-                              className="absolute inset-0 bg-cyan-500 rounded-full"
+                              transition={{ repeat: Infinity, duration: 1.6 }}
+                              className="absolute inset-0 bg-zinc-400/30 rounded-full"
                             />
                           )}
                         </AnimatePresence>
 
                         <button
                           onClick={handleVoiceButtonClick}
-                          className={`w-20 h-20 rounded-full border flex items-center justify-center relative z-10 transition-all duration-200 cursor-pointer shadow-xl ${
+                          className={`w-24 h-24 rounded-full border flex items-center justify-center relative z-10 transition-all duration-200 cursor-pointer shadow-xl ${
                             voiceStatus === 'recording'
-                              ? 'bg-rose-950 border-rose-500 text-rose-400 shadow-rose-950/50'
+                              ? 'bg-rose-950 border-rose-600 text-rose-400'
                               : voiceStatus === 'processing'
-                              ? 'bg-cyan-950 border-cyan-500 text-cyan-400 shadow-cyan-950/50 animate-pulse'
+                              ? 'bg-zinc-800 border-zinc-600 text-zinc-400 animate-pulse'
                               : voiceStatus === 'speaking'
-                              ? 'bg-indigo-950 border-indigo-500 text-indigo-400 shadow-indigo-950/50'
-                              : 'bg-[#151B2F] border-[#1E293B] text-gray-300 hover:border-cyan-500/30'
+                              ? 'bg-zinc-800 border-zinc-600 text-zinc-400'
+                              : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:border-zinc-500'
                           }`}
                         >
                           {voiceStatus === 'recording' ? (
-                            <MicOff className="w-8 h-8" />
+                            <MicOff className="w-9 h-9" />
                           ) : (
-                            <Mic className="w-8 h-8" />
+                            <Mic className="w-9 h-9" />
                           )}
                         </button>
                       </div>
                     </div>
 
                     {/* Status feedback label */}
-                    <div className="text-xs font-semibold text-white">
+                    <div className="text-sm font-medium text-zinc-300 min-h-[1.5em]">
                       {voiceStatus === 'idle' && 'Tap microphone to start speaking'}
                       {voiceStatus === 'recording' && 'Listening... Tap again to send inquiry'}
                       {voiceStatus === 'processing' && 'Synthesizing voice transcription...'}
@@ -1102,43 +1093,43 @@ export default function StorefrontView({ onLogout }: StorefrontViewProps) {
                     </div>
 
                     {/* Transcripts container */}
-                    <div className="space-y-3 mt-4 text-left">
+                    <div className="space-y-4 text-left">
                       {voiceTranscript && (
-                        <div className="bg-indigo-950/15 border border-indigo-900/20 p-3 rounded-xl">
-                          <span className="text-[9px] uppercase tracking-wider font-bold text-indigo-400 block mb-1">You said:</span>
-                          <p className="text-[11px] text-indigo-200 italic">"{voiceTranscript}"</p>
+                        <div className="bg-zinc-900 border border-zinc-700 p-4 rounded-2xl">
+                          <span className="text-xs font-mono tracking-widest text-zinc-500 block mb-2">You said:</span>
+                          <p className="text-sm text-zinc-300">"{voiceTranscript}"</p>
                         </div>
                       )}
 
                       {voiceResponseText && (
-                        <div className="bg-[#151B2F]/60 border border-[#1E293B]/60 p-3 rounded-xl relative group">
-                          <span className="text-[9px] uppercase tracking-wider font-bold text-cyan-400 block mb-1 flex items-center justify-between">
-                            <span>Assistant Response:</span>
-                            {voiceLatency && <span className="font-mono text-gray-500 text-[8px]">Processed in {voiceLatency}ms</span>}
-                          </span>
-                          <p className="text-[11px] text-gray-300 leading-relaxed">{voiceResponseText}</p>
+                        <div className="bg-zinc-900 border border-zinc-700 p-4 rounded-2xl">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-mono tracking-widest text-zinc-400">Assistant Response:</span>
+                            {voiceLatency && <span className="font-mono text-[10px] text-zinc-500">{voiceLatency}ms</span>}
+                          </div>
+                          <p className="text-sm text-zinc-200 leading-relaxed">{voiceResponseText}</p>
                         </div>
                       )}
                     </div>
                   </div>
 
                   {/* suggested voice helper scripts */}
-                  <div className="bg-[#070913] p-2.5 rounded-xl border border-[#1E293B]/50 mt-4">
-                    <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                  <div className="mt-auto bg-zinc-950 border border-zinc-800 rounded-2xl p-5 text-sm">
+                    <span className="text-xs font-mono uppercase tracking-widest text-zinc-500 block mb-3">
                       Say or type standard questions:
                     </span>
-                    <div className="space-y-1">
+                    <div className="space-y-2 text-sm">
                       {voiceLang === 'en' ? (
                         <>
                           <button 
                             onClick={() => { setVoiceTranscript('Do you ship standard standard shipping?'); runVoiceAI('Do you ship standard standard shipping?', 'en'); }}
-                            className="w-full text-left text-[10px] text-cyan-400 hover:underline block truncate cursor-pointer"
+                            className="w-full text-left text-zinc-300 hover:text-white transition-colors py-1 cursor-pointer"
                           >
                             1. "Do you ship standard standard shipping?"
                           </button>
                           <button 
                             onClick={() => { setVoiceTranscript('What is your return policy?'); runVoiceAI('What is your return policy?', 'en'); }}
-                            className="w-full text-left text-[10px] text-cyan-400 hover:underline block truncate cursor-pointer"
+                            className="w-full text-left text-zinc-300 hover:text-white transition-colors py-1 cursor-pointer"
                           >
                             2. "What is your return policy?"
                           </button>
@@ -1147,13 +1138,13 @@ export default function StorefrontView({ onLogout }: StorefrontViewProps) {
                         <>
                           <button 
                             onClick={() => { setVoiceTranscript('Hali ya oda yangu ikoje?'); runVoiceAI('Hali ya oda yangu ikoje?', 'sw'); }}
-                            className="w-full text-left text-[10px] text-cyan-400 hover:underline block truncate cursor-pointer"
+                            className="w-full text-left text-zinc-300 hover:text-white transition-colors py-1 cursor-pointer"
                           >
                             1. "Hali ya oda yangu ikoje?"
                           </button>
                           <button 
                             onClick={() => { setVoiceTranscript('Mna kahawa gani?'); runVoiceAI('Mna kahawa gani?', 'sw'); }}
-                            className="w-full text-left text-[10px] text-cyan-400 hover:underline block truncate cursor-pointer"
+                            className="w-full text-left text-zinc-300 hover:text-white transition-colors py-1 cursor-pointer"
                           >
                             2. "Mna kahawa gani?"
                           </button>
@@ -1167,32 +1158,31 @@ export default function StorefrontView({ onLogout }: StorefrontViewProps) {
 
             {/* Widget Footer */}
             {widgetTab === 'chat' && (
-              <div className="p-3 bg-[#070913] border-t border-[#1E293B] flex items-center justify-between gap-1">
+              <div className="p-4 border-t border-zinc-800 bg-zinc-950">
                 {activeConv && activeConv.status !== 'resolved' && (
                   <button
                     onClick={handleResolveSession}
-                    className="text-[10px] bg-emerald-950/20 hover:bg-emerald-900/30 text-emerald-400 border border-emerald-900/30 font-bold px-2.5 py-1.5 rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1"
-                    title="Mark conversation as resolved"
+                    className="text-xs uppercase tracking-widest text-emerald-400 hover:text-emerald-300 font-medium mb-3"
                   >
                     Resolve
                   </button>
                 )}
                 <form
                   onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
-                  className="flex-1 flex items-center gap-2 relative bg-[#0C101E] border border-[#1E293B] focus-within:border-cyan-400 rounded-xl px-3 py-1.5 transition-all duration-150"
+                  className="flex items-center bg-zinc-900 border border-zinc-700 focus-within:border-zinc-600 rounded-2xl px-4 py-1.5 transition-all"
                 >
                   <input
                     type="text"
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     placeholder="Ask standard questions..."
-                    className="flex-1 bg-transparent text-xs text-white outline-none"
+                    className="flex-1 bg-transparent text-sm text-zinc-200 outline-none py-3"
                     disabled={loading}
                   />
                   <button
                     type="submit"
                     disabled={loading || !inputText.trim()}
-                    className="text-cyan-400 hover:text-cyan-300 disabled:text-gray-600 transition-all duration-150 cursor-pointer"
+                    className="text-zinc-400 hover:text-white disabled:opacity-40 p-2 transition-colors"
                   >
                     <Send className="w-4 h-4" />
                   </button>
