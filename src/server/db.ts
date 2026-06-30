@@ -469,6 +469,7 @@ const INITIAL_DB: DatabaseSchema = {
 class LocalDB {
   private data: DatabaseSchema;
   private isSyncingToSupabase = false;
+  private saveTimeout: any = null;
 
   constructor() {
     this.data = INITIAL_DB;
@@ -534,10 +535,24 @@ class LocalDB {
         auth: { persistSession: false }
       });
 
+      // Sanitize large base64 audio data in clone to prevent connection statement timeouts
+      const sanitizedData = JSON.parse(JSON.stringify(this.data));
+      if (sanitizedData.messages && Array.isArray(sanitizedData.messages)) {
+        sanitizedData.messages = sanitizedData.messages.map((msg: any) => {
+          if (msg.audioUrl && (msg.audioUrl.startsWith('data:') || msg.audioUrl.length > 500)) {
+            return {
+              ...msg,
+              audioUrl: msg.audioUrl.substring(0, 100) + '... [Truncated for sync efficiency]'
+            };
+          }
+          return msg;
+        });
+      }
+
       // 1. Save master state JSON backup
       const syncPayload = {
         id: 'database_state',
-        data: this.data,
+        data: sanitizedData,
         updated_at: new Date().toISOString()
       };
 
@@ -567,12 +582,11 @@ class LocalDB {
         { name: 'audit_logs', key: 'auditLogs' }
       ];
 
-      for (const table of individualTables) {
-        const records = (this.data as any)[table.key] || [];
-        if (records.length === 0) continue;
-
-        // Run non-blocking background upserts with safe async/await
-        (async () => {
+      // Await all background updates in Promise.all to keep the lock held!
+      await Promise.all(
+        individualTables.map(async (table) => {
+          const records = sanitizedData[table.key] || [];
+          if (records.length === 0) return;
           try {
             const { error } = await client.from(table.name).upsert(records, { onConflict: 'id' });
             if (error) {
@@ -581,8 +595,8 @@ class LocalDB {
           } catch (err) {
             console.error(`Error in background sync for table "${table.name}":`, err);
           }
-        })();
-      }
+        })
+      );
     } catch (err) {
       console.error('Failed background-sync to Supabase:', err);
     } finally {
@@ -592,8 +606,13 @@ class LocalDB {
 
   public save() {
     // Local db.json has been deleted.
-    // Trigger real-time non-blocking persistent update in Supabase
-    this.saveToSupabase();
+    // Trigger real-time persistent update in Supabase with debouncing to batch multiple rapid changes.
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout);
+    }
+    this.saveTimeout = setTimeout(() => {
+      this.saveToSupabase();
+    }, 1000);
   }
 
   // --- Users ---

@@ -671,7 +671,7 @@ export default function StorefrontView({ onLogout }: StorefrontViewProps) {
               Multilingual Widget Sandbox
             </span>
             <h1 className="text-3xl font-semibold tracking-tighter text-white mb-4">
-              East Africa's Finest Crafts & Aromas
+              Duka Letu Finest Crafts & Aromas
             </h1>
             <p className="text-sm text-zinc-400 leading-relaxed mb-6">
               Explore our boutique products. In the bottom right corner, you will find the <b>Duka Letu Floating Help Assistant</b>—the exact live widget integrated for website visitors! Click it to inquire about shipping, coffee origins, and return policies in English or Kiswahili.

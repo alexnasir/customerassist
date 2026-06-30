@@ -998,14 +998,6 @@ ${fullSystemInstruction}`;
       finalContent = `${finalContent}\n\n${escMessage}`;
     }
 
-    // Append caution if answered with caution (70 - 89 confidence)
-    if (finalConfidence >= 70 && finalConfidence < 90 && !escalated) {
-      const cautionMessage = detectedLang === 'sw'
-        ? `*Kumbuka: Jibu hili linaweza kuhitaji uhakiki na mhudumu wa kibinadamu kama halijakufurahisha.*`
-        : `*Note: This response is compiled with automatic files; please let us know if you require further verification from a team member.*`;
-      finalContent = `${finalContent}\n\n_${cautionMessage}_`;
-    }
-
     // Record actual costs
     const latencyMs = Date.now() - startTime;
     const inputTokens = Math.floor(fullSystemInstruction.length / 4);

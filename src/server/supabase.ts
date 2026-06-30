@@ -310,10 +310,24 @@ CREATE POLICY "Allow public access" ON audit_logs FOR ALL USING (true);
         throw new Error('Local database state could not be read.');
       }
 
+      // Sanitize large base64 audio data in clone to prevent connection statement timeouts
+      const sanitizedData = JSON.parse(JSON.stringify(dbData));
+      if (sanitizedData.messages && Array.isArray(sanitizedData.messages)) {
+        sanitizedData.messages = sanitizedData.messages.map((msg: any) => {
+          if (msg.audioUrl && (msg.audioUrl.startsWith('data:') || msg.audioUrl.length > 500)) {
+            return {
+              ...msg,
+              audioUrl: msg.audioUrl.substring(0, 100) + '... [Truncated for sync efficiency]'
+            };
+          }
+          return msg;
+        });
+      }
+
       // 1. Try to upsert the master backup file to duka_letu_sync table
       const syncPayload = {
         id: 'database_state',
-        data: dbData,
+        data: sanitizedData,
         updated_at: new Date().toISOString()
       };
 
@@ -348,7 +362,7 @@ CREATE POLICY "Allow public access" ON audit_logs FOR ALL USING (true);
       const failedTables: string[] = [];
 
       for (const table of individualTables) {
-        const records = dbData[table.key] || [];
+        const records = sanitizedData[table.key] || [];
         if (records.length === 0) {
           successTables.push(`${table.name} (0 records)`);
           continue;
