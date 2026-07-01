@@ -322,11 +322,18 @@ export default function StorefrontView({ onLogout }: StorefrontViewProps) {
     if (activeConv) return activeConv;
 
     try {
+      // Generate or retrieve a persistent unique visitor ID for this browser session/tab
+      let visitorId = sessionStorage.getItem('duka_letu_guest_visitor_id');
+      if (!visitorId) {
+        visitorId = 'usr-guest-' + Math.floor(10000 + Math.random() * 90000);
+        sessionStorage.setItem('duka_letu_guest_visitor_id', visitorId);
+      }
+
       // Look for any active conversations on the server
       const getRes = await fetch('/api/conversations');
       if (getRes.ok) {
         const convs = await getRes.json();
-        const existingGuestConv = convs.find((c: any) => c.customerId === 'usr-4' && c.status === 'active');
+        const existingGuestConv = convs.find((c: any) => c.customerId === visitorId && c.status === 'active');
         if (existingGuestConv) {
           setActiveConv(existingGuestConv);
           // Load messages
@@ -344,8 +351,8 @@ export default function StorefrontView({ onLogout }: StorefrontViewProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customerId: 'usr-4',
-          customerName: 'Inquiry Guest',
+          customerId: visitorId,
+          customerName: `Inquiry Guest ${visitorId.split('-')[2]}`,
           language: language
         })
       });

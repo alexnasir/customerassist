@@ -22,12 +22,48 @@ export default function VoiceView() {
   const [aiResponseText, setAiResponseText] = useState<string>('');
   const [latency, setLatency] = useState<number | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   
   // Audio Playback
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const recognitionRef = useRef<any>(null);
   const userTranscriptRef = useRef<string>('');
+
+  // Dynamically initialize a unique conversation ID for this user session to handle concurrent multi-user execution
+  useEffect(() => {
+    const initVoiceConversation = async () => {
+      try {
+        let visitorId = sessionStorage.getItem('duka_letu_voice_visitor_id');
+        if (!visitorId) {
+          visitorId = 'voice-' + Math.floor(10000 + Math.random() * 90000);
+          sessionStorage.setItem('duka_letu_voice_visitor_id', visitorId);
+        }
+
+        const res = await fetch('/api/conversations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customerId: visitorId,
+            customerName: `Voice Session ${visitorId.split('-')[1]}`,
+            language: selectedLanguage
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setActiveConversationId(data.id);
+        } else {
+          setActiveConversationId('conv-101');
+        }
+      } catch (e) {
+        console.error('[VoiceView] Failed to initialize voice conversation, using conv-101 fallback:', e);
+        setActiveConversationId('conv-101');
+      }
+    };
+
+    initVoiceConversation();
+  }, []);
 
   useEffect(() => {
     userTranscriptRef.current = userTranscript;
@@ -308,11 +344,39 @@ export default function VoiceView() {
       // We send a dummy wav base64 string to simulate standard speech stream
       const dummyWavBase64 = 'UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAAAAAA==';
 
+      // Ensure we have a valid unique conversation ID before processing
+      let convId = activeConversationId;
+      if (!convId) {
+        let visitorId = sessionStorage.getItem('duka_letu_voice_visitor_id');
+        if (!visitorId) {
+          visitorId = 'voice-' + Math.floor(10000 + Math.random() * 90000);
+          sessionStorage.setItem('duka_letu_voice_visitor_id', visitorId);
+        }
+
+        const createRes = await fetch('/api/conversations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customerId: visitorId,
+            customerName: `Voice Session ${visitorId.split('-')[1]}`,
+            language: forcedLang || selectedLanguage
+          })
+        });
+
+        if (createRes.ok) {
+          const data = await createRes.json();
+          convId = data.id;
+          setActiveConversationId(convId);
+        } else {
+          convId = 'conv-101';
+        }
+      }
+
       const res = await fetch('/api/voice/process', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          conversationId: 'conv-101',
+          conversationId: convId,
           audio: dummyWavBase64,
           language: forcedLang || selectedLanguage,
           voiceName: selectedVoice,
