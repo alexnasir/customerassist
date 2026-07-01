@@ -321,8 +321,8 @@ async function startServer() {
       let textToSynthesize = aiResponse.content;
 
       try {
-        // A. Classify the language of the AI's response content
-        responseLang = await geminiService.classifyResponseLanguage(aiResponse.content);
+        // A. Use the pre-classified language from response generation to eliminate redundant LLM calls
+        responseLang = (aiResponse.language as any) || 'en';
         
         // B. Route based on classification
         if (responseLang === 'sw' || responseLang === 'mixed') {
@@ -458,7 +458,12 @@ async function startServer() {
 
     try {
       const start = Date.now();
-      const responseLang = language || (await geminiService.classifyResponseLanguage(text));
+      const isSwahiliHeuristic = (txt: string) => {
+        const swWords = ['na', 'ya', 'kwa', 'mimi', 'sisi', 'ndio', 'habari', 'sasa', 'mambo', 'mzigo', 'oda', 'rudisha', 'pesa', 'lipa', 'hujambo', 'asante', 'tafadhali', 'shukrani', 'jambo', 'pole'];
+        const words = txt.toLowerCase().split(/\s+/);
+        return words.some(w => swWords.includes(w));
+      };
+      const responseLang = language || (isSwahiliHeuristic(text) ? 'sw' : 'en');
       
       let textToSynthesize = text;
       let chosenVoice = voiceName || 'Zephyr';

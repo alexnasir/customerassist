@@ -144,30 +144,69 @@ function retrieveRAGContext(query: string): { context: string; sources: string[]
 }
 
 /**
- * Conversation Strategy Engine:
- * Analyzes the customer message, sentiment, history, and goals to choose
- * the optimal dynamic approach for resolution.
+ * Unified Classification & Strategy Engine:
+ * Analyzes the customer message, conversation history, and customer memory to extract 
+ * language, intents, sentiment, key entities, and determine the optimal resolution strategy
+ * in a single unified analysis step.
  */
-async function determineConversationStrategy(params: {
+async function classifyAndStrategize(params: {
   userMessage: string;
-  classification: any;
   messageHistory: string;
   customerMemory: any;
-}): Promise<ConversationStrategy> {
-  const { userMessage, classification, messageHistory, customerMemory } = params;
+}) {
+  const { userMessage, messageHistory, customerMemory } = params;
 
-  const strategyPrompt = `You are the Duka Letu Conversation Strategy Engine.
-Analyze the user's message, their emotional profile, intent, and message history, and select the optimal resolution strategy.
+  const prompt = `You are the Duka Letu Customer Support Classification & Strategy Engine.
+Analyze the user's message, conversation history, and customer memory to extract language, intents, sentiment, key entities, and determine the optimal resolution strategy in a single unified analysis step.
 
 USER MESSAGE: "${userMessage}"
-INTENT: "${classification.primaryIntent}"
-SENTIMENT: "${classification.sentiment}"
-HISTORY:
+
+CONVERSATION HISTORY:
 ${messageHistory}
 
-MEMORIES:
+CUSTOMER MEMORY:
 ${JSON.stringify(customerMemory)}
 
+INSTRUCTIONS FOR CLASSIFICATION:
+Intents:
+- "order_tracking": Asking where package/order is.
+- "shipping_delivery": Shipping times, costs, methods, delivery areas.
+- "refund_request": Requesting refunds, returns money back.
+- "return_request": Asking how to return an item, policies.
+- "payment_issue": Billing errors, failed payments, M-Pesa checks, transaction queries.
+- "account_issue": Account details, profiles, premium status.
+- "login_issue": Login errors, locking out.
+- "password_reset": Explicit password change request.
+- "product_inquiry": Size, material, stock queries.
+- "pricing_question": Coupon, price, discount checks.
+- "sales_inquiry": Bulk buys, B2B, pre-sales.
+- "technical_support": App crashing, voice bugs, web errors.
+- "complaint": Active frustration with service/products.
+- "human_agent": Speak to human agent, person, representative.
+- "greeting": Hello, sasa, habari.
+- "goodbye": Bye, thank you, asante, kwa heri.
+- "general_faq": Store locations, hours, simple policies.
+- "unknown": Unclear, gibberish.
+
+Sentiments:
+- "positive": Happy, thanking, cheerfully saying hello.
+- "neutral": Standard queries, no strong emotion.
+- "frustrated": Annoyed, mentioning delays, "still hasn't arrived".
+- "angry": Highly upset, using caps, demands escalation.
+- "urgent": Highly time-sensitive, "ASAP", "urgent", "need it today".
+
+Languages:
+- "en": English
+- "sw": Kiswahili
+- "sheng": Nairobi Sheng slang
+- "mixed": Mixture of Kiswahili and English
+
+Entities to extract:
+- "orderId": Match "OMNI-[0-9]+" or "#OMNI-[0-9]+" (strip the '#' if present).
+- "transactionId": Match "TXN-[0-9]+" or MPesa codes.
+- "refundAmount": Any numbers mentioned alongside refunds.
+
+INSTRUCTIONS FOR STRATEGY:
 Available Strategy Types:
 1. "Empathetic De-escalation": Select when customer sentiment is angry, frustrated, or they have a complaint.
 2. "Step-by-Step Diagnostic": Select when there is a technical support issue, login issue, or complex billing/refund task requiring sequential steps.
@@ -176,25 +215,32 @@ Available Strategy Types:
 5. "Educational Onboarding": Select when the user asks questions about rules, procedures, "how-to", return periods, etc.
 6. "General Guidance": Fallback for standard or ambiguous chat.
 
-Your output must contain:
-- strategyType: One of the 6 strings above.
-- confidenceScore: Your confidence (0.0 to 1.0).
-- reasoning: Why you chose this strategy.
-- recommendedTactics: 3 to 4 specific conversational guidelines or psychological approaches (e.g., "Begin with an apology validating frustration", "Ask for the OMNI-XXXXX order ID in clear formatting", "Use simple Kiswahili/Sheng to build rapport", "Keep explanations extremely concise to avoid overwhelming them").
-- goals: A list of 3 to 4 actionable milestones for this conversation. Define their current status: "achieved" (true) or "pending" (false). For example, if they have already provided their order ID, mark that goal as true!
+Determine goals (3 to 4 actionable milestones, e.g. "Identify customer problem", "Check order history") and recommended tactics (3 to 4 specific guidelines, e.g., "Use simple Kiswahili/Sheng to build rapport", "Acknowledge frustration").
 
 Return EXACTLY a JSON object conforming to the schema.`;
 
   try {
-    const strategyResponse = await generateContentWithRetry({
+    const response = await generateContentWithRetry({
       model: 'gemini-3.5-flash',
-      contents: strategyPrompt,
+      contents: prompt,
       config: {
         temperature: 0.1,
         responseMimeType: 'application/json',
         responseSchema: {
           type: Type.OBJECT,
           properties: {
+            language: { type: Type.STRING },
+            languageConfidence: { type: Type.NUMBER },
+            primaryIntent: { type: Type.STRING },
+            primaryIntentConfidence: { type: Type.NUMBER },
+            secondaryIntent: { type: Type.STRING },
+            secondaryIntentConfidence: { type: Type.NUMBER },
+            sentiment: { type: Type.STRING },
+            sentimentConfidence: { type: Type.NUMBER },
+            orderId: { type: Type.STRING, nullable: true },
+            transactionId: { type: Type.STRING, nullable: true },
+            refundAmount: { type: Type.NUMBER, nullable: true },
+
             strategyType: {
               type: Type.STRING,
               enum: [
@@ -224,27 +270,77 @@ Return EXACTLY a JSON object conforming to the schema.`;
               }
             }
           },
-          required: ['strategyType', 'confidenceScore', 'reasoning', 'recommendedTactics', 'goals']
+          required: [
+            'language', 'languageConfidence', 'primaryIntent', 'primaryIntentConfidence', 
+            'sentiment', 'sentimentConfidence', 'strategyType', 'confidenceScore', 
+            'reasoning', 'recommendedTactics', 'goals'
+          ]
         }
       }
     });
 
-    const parsed = JSON.parse(strategyResponse.text || '{}');
+    const parsed = JSON.parse(response.text || '{}');
     return {
-      strategyType: parsed.strategyType || 'General Guidance',
-      confidenceScore: parsed.confidenceScore ?? 0.90,
-      reasoning: parsed.reasoning || 'Standard response protocol.',
-      recommendedTactics: parsed.recommendedTactics || ['Be helpful', 'Maintain polite language'],
-      goals: parsed.goals || [{ description: 'Assist customer', achieved: false }]
+      classification: {
+        language: parsed.language || 'en',
+        languageConfidence: parsed.languageConfidence ?? 0.90,
+        primaryIntent: parsed.primaryIntent || 'general_faq',
+        primaryIntentConfidence: parsed.primaryIntentConfidence ?? 0.90,
+        secondaryIntent: parsed.secondaryIntent || 'unknown',
+        secondaryIntentConfidence: parsed.secondaryIntentConfidence ?? 0.10,
+        sentiment: parsed.sentiment || 'neutral',
+        sentimentConfidence: parsed.sentimentConfidence ?? 0.90,
+        orderId: parsed.orderId || null,
+        transactionId: parsed.transactionId || null,
+        refundAmount: parsed.refundAmount || null
+      },
+      strategy: {
+        strategyType: parsed.strategyType || 'General Guidance',
+        confidenceScore: parsed.confidenceScore ?? 0.90,
+        reasoning: parsed.reasoning || 'Standard response protocol.',
+        recommendedTactics: parsed.recommendedTactics || ['Be helpful', 'Maintain polite language'],
+        goals: parsed.goals || [{ description: 'Assist customer', achieved: false }]
+      }
     };
-  } catch (error) {
-    console.error('Failed to determine strategy via LLM, using fallback:', error);
+  } catch (err) {
+    console.error('Unified classifyAndStrategize failed, running robust fallback:', err);
+    // Dynamic local fallback to keep the app functional under high load or network failure
+    const lower = userMessage.toLowerCase();
+    let primaryIntent = 'general_faq';
+    if (lower.includes('order') || lower.includes('oda') || lower.includes('package') || lower.includes('mzigo')) {
+      primaryIntent = 'order_tracking';
+    } else if (lower.includes('refund') || lower.includes('rudisha pesa')) {
+      primaryIntent = 'refund_request';
+    } else if (lower.includes('return') || lower.includes('rudisha')) {
+      primaryIntent = 'return_request';
+    } else if (lower.includes('agent') || lower.includes('mhudumu') || lower.includes('ongea na mtu')) {
+      primaryIntent = 'human_agent';
+    }
+
+    const orderMatch = userMessage.match(/OMNI-\d+/i);
+    const orderId = orderMatch ? orderMatch[0].toUpperCase() : null;
+
     return {
-      strategyType: 'General Guidance',
-      confidenceScore: 0.80,
-      reasoning: 'Fallback strategy due to engine failure.',
-      recommendedTactics: ['Be helpful', 'Speak politely', 'Keep it simple'],
-      goals: [{ description: 'Resolve the customer query', achieved: false }]
+      classification: {
+        language: 'en',
+        languageConfidence: 0.80,
+        primaryIntent,
+        primaryIntentConfidence: 0.80,
+        secondaryIntent: 'unknown',
+        secondaryIntentConfidence: 0.10,
+        sentiment: 'neutral',
+        sentimentConfidence: 0.80,
+        orderId,
+        transactionId: null,
+        refundAmount: null
+      },
+      strategy: {
+        strategyType: 'General Guidance',
+        confidenceScore: 0.80,
+        reasoning: 'Fallback strategy due to unified engine exception.',
+        recommendedTactics: ['Be helpful', 'Speak politely', 'Keep it simple'],
+        goals: [{ description: 'Resolve the customer query', achieved: false }]
+      }
     };
   }
 }
@@ -427,134 +523,24 @@ export const geminiService = {
     const customerId = conversation.customerId;
     const customerName = conversation.customerName;
 
-    // --- PHASE 1, 2 & 10: CLASSIFICATION ENGINE (INTENT, SENTIMENT, LANG & ENTITIES) ---
-    let classification = {
-      language: 'en',
-      languageConfidence: 0.90,
-      primaryIntent: 'general_faq',
-      primaryIntentConfidence: 0.90,
-      secondaryIntent: 'unknown',
-      secondaryIntentConfidence: 0.10,
-      sentiment: 'neutral',
-      sentimentConfidence: 0.90,
-      orderId: null as string | null,
-      transactionId: null as string | null,
-      refundAmount: null as number | null
-    };
-
-    try {
-      const classificationPrompt = `Analyze this customer support query and extract the language, primary/secondary intents, sentiment, and key entities.
-
-User query: "${userMessage}"
-
-Intents:
-- "order_tracking": Asking where package/order is.
-- "shipping_delivery": Shipping times, costs, methods, delivery areas.
-- "refund_request": Requesting refunds, returns money back.
-- "return_request": Asking how to return an item, policies.
-- "payment_issue": Billing errors, failed payments, M-Pesa checks, transaction queries.
-- "account_issue": Account details, profiles, premium status.
-- "login_issue": Login errors, locking out.
-- "password_reset": Explicit password change request.
-- "product_inquiry": Size, material, stock queries.
-- "pricing_question": Coupon, price, discount checks.
-- "sales_inquiry": Bulk buys, B2B, pre-sales.
-- "technical_support": App crashing, voice bugs, web errors.
-- "complaint": Active frustration with service/products.
-- "human_agent": Speak to human agent, person, representative.
-- "greeting": Hello, sasa, habari.
-- "goodbye": Bye, thank you, asante, kwa heri.
-- "general_faq": Store locations, hours, simple policies.
-- "unknown": Unclear, gibberish.
-
-Sentiments:
-- "positive": Happy, thanking, cheerfully saying hello.
-- "neutral": Standard queries, no strong emotion.
-- "frustrated": Annoyed, mentioning delays, "still hasn't arrived".
-- "angry": Highly upset, using caps, demands escalation.
-- "urgent": Highly time-sensitive, "ASAP", "urgent", "need it today".
-
-Languages:
-- "en": English
-- "sw": Kiswahili
-- "sheng": Nairobi Sheng slang
-- "mixed": Mixture of Kiswahili and English
-
-Entities to extract:
-- "orderId": Match "OMNI-[0-9]+" or "#OMNI-[0-9]+" (strip the '#' if present).
-- "transactionId": Match "TXN-[0-9]+" or MPesa codes.
-- "refundAmount": Any numbers mentioned alongside refunds.
-
-Return a JSON object conforming exactly to the response schema.`;
-
-      const classResponse = await generateContentWithRetry({
-        model: 'gemini-3.5-flash',
-        contents: classificationPrompt,
-        config: {
-          temperature: 0.1,
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              language: { type: Type.STRING },
-              languageConfidence: { type: Type.NUMBER },
-              primaryIntent: { type: Type.STRING },
-              primaryIntentConfidence: { type: Type.NUMBER },
-              secondaryIntent: { type: Type.STRING },
-              secondaryIntentConfidence: { type: Type.NUMBER },
-              sentiment: { type: Type.STRING },
-              sentimentConfidence: { type: Type.NUMBER },
-              orderId: { type: Type.STRING, nullable: true },
-              transactionId: { type: Type.STRING, nullable: true },
-              refundAmount: { type: Type.NUMBER, nullable: true }
-            },
-            required: ['language', 'languageConfidence', 'primaryIntent', 'primaryIntentConfidence', 'sentiment', 'sentimentConfidence']
-          }
-        }
-      });
-
-      const parsedClass = JSON.parse(classResponse.text || '{}');
-      classification = { ...classification, ...parsedClass };
-    } catch (classError) {
-      console.warn('Classification API call failed, running heuristic fallback:', classError);
-      // Heuristic Fallback
-      const lower = userMessage.toLowerCase();
-      if (lower.includes('order') || lower.includes('oda') || lower.includes('package') || lower.includes('mzigo')) {
-        classification.primaryIntent = 'order_tracking';
-      } else if (lower.includes('refund') || lower.includes('rudisha pesa')) {
-        classification.primaryIntent = 'refund_request';
-      } else if (lower.includes('return') || lower.includes('rudisha')) {
-        classification.primaryIntent = 'return_request';
-      } else if (lower.includes('agent') || lower.includes('mhudumu') || lower.includes('ongea na mtu')) {
-        classification.primaryIntent = 'human_agent';
-      }
-      
-      const orderMatch = userMessage.match(/OMNI-\d+/i);
-      if (orderMatch) {
-        classification.orderId = orderMatch[0].toUpperCase();
-      }
-    }
-
-    // Determine final working language
-    const detectedLang = (forcedLanguage && forcedLanguage !== 'auto') 
-      ? forcedLanguage 
-      : (classification.language as any === 'sw' || classification.language as any === 'sheng' ? 'sw' : 'en');
-    
-    // --- PHASE 9: CUSTOMER MEMORY RETRIEVAL ---
-    const customerMemory = db.getCustomerMemory(customerId, customerName);
-
-    // --- CONVERSATION STRATEGY ENGINE ---
+    // --- PHASE 1, 2, 10 & STRATEGY: UNIFIED CLASSIFICATION & STRATEGY ENGINE ---
     const messageHistory = db.getMessagesByConversationId(conversationId)
       .slice(-6)
       .map(m => `${m.sender === 'user' ? 'Customer' : 'Assistant'}: ${m.content}`)
       .join('\n');
 
-    const strategy = await determineConversationStrategy({
+    const customerMemory = db.getCustomerMemory(customerId, customerName);
+
+    const { classification, strategy } = await classifyAndStrategize({
       userMessage,
-      classification,
       messageHistory,
       customerMemory
     });
+
+    // Determine final working language
+    const detectedLang = (forcedLanguage && forcedLanguage !== 'auto') 
+      ? forcedLanguage 
+      : (classification.language as any === 'sw' || classification.language as any === 'sheng' ? 'sw' : 'en');
 
     db.updateConversation(conversationId, { 
       language: detectedLang as any,
@@ -814,13 +800,18 @@ CUSTOMER MEMORY (Do not repeat previous topics unless requested):
 - Previous Sentiment: ${customerMemory.previousSentiments.join(', ') || 'None'}
 - Previous Intents: ${customerMemory.previousIntents.join(', ') || 'None'}
 
-If the user asks to speak to a person, an agent, or asks to transfer, write exactly "[TRANSFER_SIGNAL] Let me escalate this conversation and get a human support specialist to assist you right away." so the system knows to trigger escalation.`;
+If the user asks to speak to a person, an agent, or asks to transfer, write exactly "[TRANSFER_SIGNAL] Let me escalate this conversation and get a human support specialist to assist you right away." inside "processedResponse" so the system knows to trigger escalation.`;
 
     const promptText = `Conversation History:
 ${messageHistory}
 
 Customer's current message: ${userMessage}
-Assistant (Agent Tone: ${toneGuideline}):`;
+
+Please act as both the Specialist Support Agent and the Response Evaluation/Self-Correction Layer.
+1. Draft a perfect response based on the conversation history and rules.
+2. Run self-evaluation checks (accuracy, tone, clarity, hallucination risk, safety blocked, or if it requires escalation).
+3. Self-correct any flaws, robotic phrases, or safety issues.
+4. Output EXACTLY a JSON object matching the requested schema.`;
 
     let finalContent = 'Sorry, I could not generate a response.';
     let postResult = {
@@ -840,78 +831,47 @@ Assistant (Agent Tone: ${toneGuideline}):`;
         contents: promptText,
         config: {
           systemInstruction: fullSystemInstruction,
-          temperature: 0.2
-        }
-      });
-
-      finalContent = response.text || finalContent;
-
-      // --- PHASE 15: RUN RESPONSE POST-PROCESSING LAYER (FIRST PASS) ---
-      postResult = await postProcessResponse({
-        userMessage,
-        generatedResponse: finalContent,
-        retrievedContext: context,
-        toolResultsText,
-        customerMemory,
-        classification
-      });
-
-      // --- REGENERATION LOGIC ---
-      const needsRegeneration = postResult.overallQuality < 0.80 || 
-                                postResult.hallucinationRisk > 0.20 || 
-                                postResult.toneScore < 0.75;
-
-      if (needsRegeneration && !postResult.blocked) {
-        console.log(`[POST-PROCESSOR] First pass failed quality checks. Regenerating response...`);
-        
-        const correctivePrompt = `The previous response failed our post-processing checks.
-Failing details:
-- Accuracy Score: ${postResult.accuracyScore}
-- Tone Score: ${postResult.toneScore}
-- Hallucination Risk: ${postResult.hallucinationRisk}
-- Proposed text: "${postResult.processedResponse}"
-
-Please regenerate a completely compliant, factually exact, warm, and professional response that directly answers: "${userMessage}".
-Strictly follow the agent instructions and multilingual policies:
-${fullSystemInstruction}`;
-
-        try {
-          const regenResponse = await generateContentWithRetry({
-            model: 'gemini-3.5-flash',
-            contents: correctivePrompt,
-            config: {
-              temperature: 0.3
-            }
-          });
-
-          const regeneratedText = regenResponse.text || finalContent;
-
-          // Run post-processor second pass
-          const secondPassResult = await postProcessResponse({
-            userMessage,
-            generatedResponse: regeneratedText,
-            retrievedContext: context,
-            toolResultsText,
-            customerMemory,
-            classification
-          });
-
-          // If second pass fails, escalate to human agent
-          if (secondPassResult.overallQuality < 0.80 || secondPassResult.hallucinationRisk > 0.20 || secondPassResult.toneScore < 0.75) {
-            console.warn('[POST-PROCESSOR] Regenerated response still fails checks. Forcing escalation.');
-            secondPassResult.requiresEscalation = true;
+          temperature: 0.2,
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              processedResponse: { 
+                type: Type.STRING,
+                description: "The final warm, polite, and human conversational response to the customer."
+              },
+              accuracyScore: { type: Type.NUMBER },
+              toneScore: { type: Type.NUMBER },
+              clarityScore: { type: Type.NUMBER },
+              hallucinationRisk: { type: Type.NUMBER },
+              overallQuality: { type: Type.NUMBER },
+              blocked: { type: Type.BOOLEAN },
+              requiresEscalation: { type: Type.BOOLEAN }
+            },
+            required: [
+              'processedResponse', 'accuracyScore', 'toneScore', 'clarityScore', 
+              'hallucinationRisk', 'overallQuality', 'blocked', 'requiresEscalation'
+            ]
           }
-
-          postResult = secondPassResult;
-        } catch (regenErr) {
-          console.error('Regeneration attempt failed:', regenErr);
         }
-      }
+      });
 
-      finalContent = postResult.processedResponse;
+      const parsed = JSON.parse(response.text || '{}');
+      postResult = {
+        processedResponse: parsed.processedResponse || '',
+        accuracyScore: parsed.accuracyScore ?? 0.90,
+        toneScore: parsed.toneScore ?? 0.90,
+        clarityScore: parsed.clarityScore ?? 0.90,
+        hallucinationRisk: parsed.hallucinationRisk ?? 0.05,
+        overallQuality: parsed.overallQuality ?? 0.90,
+        blocked: !!parsed.blocked,
+        requiresEscalation: !!parsed.requiresEscalation
+      };
+
+      finalContent = postResult.processedResponse || finalContent;
 
     } catch (responseError) {
-      console.error('Response generation failed, triggering fallback response:', responseError);
+      console.error('Unified response generation failed, triggering fallback response:', responseError);
       finalContent = (detectedLang === 'sw') 
         ? `Niko hapa kukusaidia. Samahani, nimepata hitilafu ya mtandao kwa muda mfupi. Tafadhali subiri nikuunganishe na mhudumu wetu wa usaidizi wa kibinadamu ili akusaidie vizuri.`
         : `I am here to help you. I encountered a minor system connection issue. Let me connect you directly with a human support specialist to ensure you get assisted.`;
@@ -1022,7 +982,8 @@ ${fullSystemInstruction}`;
       routedAgent: agentName,
       toolsCalled,
       evaluation,
-      strategy
+      strategy,
+      language: detectedLang
     };
   },
 
@@ -1712,8 +1673,8 @@ export class SwahiliSpeechOptimizer {
       // Stage 5: Segment long sentences into natural, prosody-aware pauses
       processed = this.segmentLongSentences(processed);
 
-      // Stage 6: Use Gemini for high-fidelity native Kiswahili voice synthesis polish
-      const polished = await this.polishWithAI(processed);
+      // Local high-fidelity processing is already extremely powerful and fast. Skip the extra LLM call to maximize speed!
+      const polished = processed;
 
       // Final pass: clean up any remaining robotic remnants or formatting issues
       return this.cleanRoboticRemnants(polished);
