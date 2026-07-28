@@ -318,16 +318,16 @@ export default function DashboardView() {
   }
 
   return (
-    <div className="flex-1 bg-zinc-950 p-8 overflow-y-auto" id="dashboard-view">
+    <div className="flex-1 bg-zinc-950 p-4 sm:p-8 overflow-y-auto touch-scroll" id="dashboard-view">
       {/* Header */}
-      <div className="flex items-center justify-between mb-10">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 sm:mb-10">
         <div>
-          <h2 className="text-3xl font-semibold tracking-tight text-white">System Analytics & Telemetry</h2>
-          <p className="text-zinc-400 mt-1">Real-time performance monitoring of support agents, prompts, and cost indicators.</p>
+          <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">System Analytics & Telemetry</h2>
+          <p className="text-xs sm:text-sm text-zinc-400 mt-1">Real-time performance monitoring of support agents, prompts, and cost indicators.</p>
         </div>
         <button 
           onClick={fetchAnalytics}
-          className="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-zinc-600 text-zinc-300 px-5 py-2.5 rounded-2xl text-sm font-medium transition-all"
+          className="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-zinc-600 text-zinc-300 px-4 sm:px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-medium transition-all min-h-[44px]"
         >
           <RefreshCw className="w-4 h-4" />
           Refresh Now
@@ -335,16 +335,16 @@ export default function DashboardView() {
       </div>
 
       {/* Numerical Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-10">
         {/* Total Conversations */}
-        <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-3xl group">
+        <div className="bg-zinc-900 border border-zinc-800 p-5 sm:p-6 rounded-3xl group">
           <div className="flex items-start justify-between">
             <div>
               <div className="p-3 bg-zinc-800 rounded-2xl inline-block">
                 <MessageSquare className="w-5 h-5 text-cyan-400" />
               </div>
-              <p className="text-sm text-zinc-400 mt-6 font-medium">Total Conversations</p>
-              <h3 className="text-4xl font-semibold text-white mt-1 tracking-tighter">{data.totalConversations}</h3>
+              <p className="text-xs sm:text-sm text-zinc-400 mt-4 sm:mt-6 font-medium">Total Conversations</p>
+              <h3 className="text-3xl sm:text-4xl font-semibold text-white mt-1 tracking-tighter">{data.totalConversations}</h3>
             </div>
             <div className="text-emerald-400 text-xs flex items-center gap-1 mt-1">
               <TrendingUp className="w-3.5 h-3.5" /> +14%
@@ -353,56 +353,56 @@ export default function DashboardView() {
         </div>
 
         {/* CSAT Score */}
-        <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-3xl group">
+        <div className="bg-zinc-900 border border-zinc-800 p-5 sm:p-6 rounded-3xl group">
           <div className="flex items-start justify-between">
             <div>
               <div className="p-3 bg-zinc-800 rounded-2xl inline-block">
                 <Award className="w-5 h-5 text-indigo-400" />
               </div>
-              <p className="text-sm text-zinc-400 mt-6 font-medium">Average CSAT Rating</p>
-              <h3 className="text-4xl font-semibold text-white mt-1 tracking-tighter">{data.avgCsat} <span className="text-xl text-zinc-500">/ 5</span></h3>
+              <p className="text-xs sm:text-sm text-zinc-400 mt-4 sm:mt-6 font-medium">Average CSAT Rating</p>
+              <h3 className="text-3xl sm:text-4xl font-semibold text-white mt-1 tracking-tighter">{data.avgCsat} <span className="text-lg sm:text-xl text-zinc-500">/ 5</span></h3>
             </div>
           </div>
         </div>
 
         {/* Resolution Rate */}
-        <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-3xl group">
+        <div className="bg-zinc-900 border border-zinc-800 p-5 sm:p-6 rounded-3xl group">
           <div className="flex items-start justify-between">
             <div>
               <div className="p-3 bg-zinc-800 rounded-2xl inline-block">
                 <CheckCircle className="w-5 h-5 text-emerald-400" />
               </div>
-              <p className="text-sm text-zinc-400 mt-6 font-medium">AI Resolution Rate</p>
-              <h3 className="text-4xl font-semibold text-white mt-1 tracking-tighter">{data.resolutionRate}%</h3>
+              <p className="text-xs sm:text-sm text-zinc-400 mt-4 sm:mt-6 font-medium">AI Resolution Rate</p>
+              <h3 className="text-3xl sm:text-4xl font-semibold text-white mt-1 tracking-tighter">{data.resolutionRate}%</h3>
             </div>
           </div>
         </div>
 
         {/* Token Cost */}
-        <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-3xl group">
+        <div className="bg-zinc-900 border border-zinc-800 p-5 sm:p-6 rounded-3xl group">
           <div className="flex items-start justify-between">
             <div>
               <div className="p-3 bg-zinc-800 rounded-2xl inline-block">
                 <DollarSign className="w-5 h-5 text-rose-400" />
               </div>
-              <p className="text-sm text-zinc-400 mt-6 font-medium">Simulated AI Cost</p>
-              <h3 className="text-4xl font-semibold text-white mt-1 tracking-tighter">${data.totalCost.toFixed(3)}</h3>
+              <p className="text-xs sm:text-sm text-zinc-400 mt-4 sm:mt-6 font-medium">Simulated AI Cost</p>
+              <h3 className="text-3xl sm:text-4xl font-semibold text-white mt-1 tracking-tighter">${data.totalCost.toFixed(3)}</h3>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Graphs Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 mb-6 sm:mb-10">
         {/* Graph 1: Conversation Volume Area Chart */}
-        <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-3xl lg:col-span-2">
-          <div className="flex items-center justify-between mb-8">
-            <h4 className="font-semibold text-white">Support Volume & Telemetry</h4>
-            <span className="text-xs text-zinc-400">Last 7 Days</span>
+        <div className="bg-zinc-900 border border-zinc-800 p-4 sm:p-6 rounded-3xl lg:col-span-2">
+          <div className="flex items-center justify-between mb-6">
+            <h4 className="font-semibold text-white text-sm sm:text-base">Support Volume & Telemetry</h4>
+            <span className="text-xs text-zinc-400 font-mono">Last 7 Days</span>
           </div>
-          <div className="h-80 -mx-2">
+          <div className="h-64 sm:h-80 -mx-2">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data.dailyMetrics} margin={{ top: 10, right: 20, left: -10, bottom: 0 }}>
+              <AreaChart data={data.dailyMetrics} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorConv" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.25}/>
@@ -414,37 +414,38 @@ export default function DashboardView() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="2 2" stroke="#27272a" />
-                <XAxis dataKey="date" stroke="#52525b" fontSize={12} />
-                <YAxis stroke="#52525b" fontSize={12} />
+                <XAxis dataKey="date" stroke="#52525b" fontSize={11} />
+                <YAxis stroke="#52525b" fontSize={11} />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: '#18181b', 
                     border: 'none', 
                     borderRadius: '12px', 
-                    color: '#e4e4e7' 
+                    color: '#e4e4e7',
+                    fontSize: '12px'
                   }} 
                 />
-                <Legend verticalAlign="top" height={36} />
-                <Area type="monotone" name="Total Chats" dataKey="conversations" stroke="#06b6d4" strokeWidth={3} fillOpacity={1} fill="url(#colorConv)" />
-                <Area type="monotone" name="Human Escalations" dataKey="escalations" stroke="#f43f5e" strokeWidth={3} fillOpacity={1} fill="url(#colorEscal)" />
+                <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
+                <Area type="monotone" name="Total Chats" dataKey="conversations" stroke="#06b6d4" strokeWidth={2.5} fillOpacity={1} fill="url(#colorConv)" />
+                <Area type="monotone" name="Human Escalations" dataKey="escalations" stroke="#f43f5e" strokeWidth={2.5} fillOpacity={1} fill="url(#colorEscal)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Graph 2: Topic distribution */}
-        <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-3xl">
-          <div className="flex items-center justify-between mb-8">
-            <h4 className="font-semibold text-white">Inquiry Categories</h4>
+        <div className="bg-zinc-900 border border-zinc-800 p-4 sm:p-6 rounded-3xl">
+          <div className="flex items-center justify-between mb-6">
+            <h4 className="font-semibold text-white text-sm sm:text-base">Inquiry Categories</h4>
           </div>
-          <div className="h-80 -mx-1">
+          <div className="h-64 sm:h-80 -mx-1">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.topicDistribution} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <BarChart data={data.topicDistribution} layout="vertical" margin={{ top: 5, right: 15, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="2 2" stroke="#27272a" horizontal={false} />
-                <XAxis type="number" stroke="#52525b" fontSize={11} />
-                <YAxis dataKey="topic" type="category" stroke="#52525b" fontSize={12} width={95} />
-                <Tooltip contentStyle={{ backgroundColor: '#18181b', border: 'none', borderRadius: '12px' }} />
-                <Bar dataKey="count" radius={[0, 6, 6, 0]} barSize={22}>
+                <XAxis type="number" stroke="#52525b" fontSize={10} />
+                <YAxis dataKey="topic" type="category" stroke="#52525b" fontSize={10} width={85} />
+                <Tooltip contentStyle={{ backgroundColor: '#18181b', border: 'none', borderRadius: '12px', fontSize: '12px' }} />
+                <Bar dataKey="count" radius={[0, 6, 6, 0]} barSize={20}>
                   {data.topicDistribution.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
@@ -456,27 +457,27 @@ export default function DashboardView() {
       </div>
 
       {/* Extra Metrics Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
         {/* AI Performance Statistics */}
-        <div className="bg-zinc-900 border border-zinc-800 p-7 rounded-3xl">
-          <h4 className="font-semibold text-white mb-8">AI Performance Telemetry</h4>
-          <div className="space-y-8">
+        <div className="bg-zinc-900 border border-zinc-800 p-5 sm:p-7 rounded-3xl">
+          <h4 className="font-semibold text-white mb-6 text-sm sm:text-base">AI Performance Telemetry</h4>
+          <div className="space-y-6">
             <div>
-              <div className="flex justify-between text-sm mb-3">
+              <div className="flex justify-between text-xs sm:text-sm mb-3">
                 <span className="text-zinc-400">Average Response Latency</span>
                 <span className="font-mono text-white">{data.avgLatencyMs} ms</span>
               </div>
-              <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                 <div className="h-full bg-cyan-400 rounded-full transition-all" style={{ width: `${Math.min(100, Math.round(data.avgLatencyMs / 6))}%` }}></div>
               </div>
             </div>
 
             <div>
-              <div className="flex justify-between text-sm mb-3">
+              <div className="flex justify-between text-xs sm:text-sm mb-3">
                 <span className="text-zinc-400">Escalation Transfer Rate</span>
                 <span className="font-mono text-white">{data.escalationRate}%</span>
               </div>
-              <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                 <div className="h-full bg-rose-500 rounded-full transition-all" style={{ width: `${data.escalationRate}%` }}></div>
               </div>
             </div>
@@ -484,52 +485,52 @@ export default function DashboardView() {
         </div>
 
         {/* Prompt Version Leaderboard */}
-        <div className="bg-zinc-900 border border-zinc-800 p-7 rounded-3xl lg:col-span-2">
-          <div className="flex items-center justify-between mb-8">
-            <h4 className="font-semibold text-white">Prompt Leaderboard</h4>
-            <div className="text-xs bg-zinc-800 text-cyan-400 px-3 py-1 rounded-full">Active Templates</div>
+        <div className="bg-zinc-900 border border-zinc-800 p-5 sm:p-7 rounded-3xl lg:col-span-2">
+          <div className="flex items-center justify-between mb-6">
+            <h4 className="font-semibold text-white text-sm sm:text-base">Prompt Leaderboard</h4>
+            <div className="text-[10px] sm:text-xs bg-zinc-800 text-cyan-400 px-3 py-1 rounded-full font-mono">Active Templates</div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="overflow-x-auto touch-scroll">
+            <table className="w-full min-w-[500px]">
               <thead>
                 <tr className="border-b border-zinc-800 text-left text-xs text-zinc-500 font-medium">
-                  <th className="pb-4">Prompt Name</th>
-                  <th className="pb-4">Lang</th>
-                  <th className="pb-4">CSAT Score</th>
-                  <th className="pb-4">Resolution</th>
-                  <th className="pb-4">Latency</th>
+                  <th className="pb-3">Prompt Name</th>
+                  <th className="pb-3">Lang</th>
+                  <th className="pb-3">CSAT Score</th>
+                  <th className="pb-3">Resolution</th>
+                  <th className="pb-3">Latency</th>
                 </tr>
               </thead>
-              <tbody className="text-sm divide-y divide-zinc-800">
+              <tbody className="text-xs sm:text-sm divide-y divide-zinc-800">
                 <tr className="hover:bg-zinc-900/70">
-                  <td className="py-5 font-medium text-white flex items-center gap-3">
-                    <div className="w-2 h-2 bg-emerald-500 rounded-full" />
+                  <td className="py-4 font-medium text-white flex items-center gap-3">
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full shrink-0" />
                     English Support System (V1)
                   </td>
-                  <td className="py-5 font-mono text-cyan-400">EN</td>
-                  <td className="py-5 font-semibold text-white">4.7</td>
-                  <td className="py-5 text-emerald-400">85%</td>
-                  <td className="py-5 text-zinc-400">340 ms</td>
+                  <td className="py-4 font-mono text-cyan-400">EN</td>
+                  <td className="py-4 font-semibold text-white">4.7</td>
+                  <td className="py-4 text-emerald-400">85%</td>
+                  <td className="py-4 text-zinc-400 font-mono">340 ms</td>
                 </tr>
                 <tr className="hover:bg-zinc-900/70">
-                  <td className="py-5 font-medium text-white flex items-center gap-3">
-                    <div className="w-2 h-2 bg-emerald-500 rounded-full" />
+                  <td className="py-4 font-medium text-white flex items-center gap-3">
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full shrink-0" />
                     Swahili Support (V1)
                   </td>
-                  <td className="py-5 font-mono text-indigo-400">SW</td>
-                  <td className="py-5 font-semibold text-white">4.4</td>
-                  <td className="py-5 text-emerald-400">81%</td>
-                  <td className="py-5 text-zinc-400">380 ms</td>
+                  <td className="py-4 font-mono text-indigo-400">SW</td>
+                  <td className="py-4 font-semibold text-white">4.4</td>
+                  <td className="py-4 text-emerald-400">81%</td>
+                  <td className="py-4 text-zinc-400 font-mono">380 ms</td>
                 </tr>
                 <tr className="hover:bg-zinc-900/70">
-                  <td className="py-5 font-medium text-zinc-400 flex items-center gap-3">
-                    <div className="w-2 h-2 bg-zinc-600 rounded-full" />
+                  <td className="py-4 font-medium text-zinc-400 flex items-center gap-3">
+                    <div className="w-2 h-2 bg-zinc-600 rounded-full shrink-0" />
                     English Concise Support Pro (V2)
                   </td>
-                  <td className="py-5 font-mono">EN</td>
-                  <td className="py-5 text-zinc-400">Pending</td>
-                  <td className="py-5 text-emerald-400">89%</td>
-                  <td className="py-5 text-zinc-400">290 ms</td>
+                  <td className="py-4 font-mono">EN</td>
+                  <td className="py-4 text-zinc-400">Pending</td>
+                  <td className="py-4 text-emerald-400">89%</td>
+                  <td className="py-4 text-zinc-400 font-mono">290 ms</td>
                 </tr>
               </tbody>
             </table>

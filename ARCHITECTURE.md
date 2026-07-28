@@ -1,6 +1,6 @@
-# OmniAssist AI — System Architecture & Data Flow
+# Duka Letu AI Customer Support — System Architecture & Data Flow
 
-This document details the high-performance system architecture, data pipelines, security guardrails, and codebase structure of **OmniAssist AI**.
+This document details the high-performance system architecture, data pipelines, security guardrails, and codebase structure of **Duka Letu AI Customer Support**.
 
 ---
 

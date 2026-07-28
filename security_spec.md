@@ -1,6 +1,6 @@
 # Firestore Security Specification & TDD Spec
 
-This specification defines the rigorous security posture, data invariants, adversarial testing payloads, and testing scripts used to audit the Firestore Security Rules for OmniAssist AI.
+This specification defines the rigorous security posture, data invariants, adversarial testing payloads, and testing scripts used to audit the Firestore Security Rules for Duka Letu AI Customer Support.
 
 ---
 
@@ -87,7 +87,7 @@ Below is a mock-up of the rules validation runner that demonstrates how the syst
 // firestore.rules.test.ts
 import { assertFails, assertSucceeds, initializeTestEnvironment } from '@firebase/rules-unit-testing';
 
-describe('OmniAssist AI - Zero-Trust Security Rules Audits', () => {
+describe('Duka Letu AI Customer Support - Zero-Trust Security Rules Audits', () => {
   let testEnv;
 
   beforeAll(async () => {

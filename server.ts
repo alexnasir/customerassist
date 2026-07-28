@@ -209,7 +209,7 @@ async function startServer() {
         routedAgent: aiResponse.routedAgent,
         toolsCalled: aiResponse.toolsCalled,
         evaluation: aiResponse.evaluation,
-        strategy: aiResponse.strategy
+        strategy: aiResponse.strategy as any
       };
       db.createMessage(aiMsg);
 
@@ -428,7 +428,7 @@ async function startServer() {
         routedAgent: aiResponse.routedAgent,
         toolsCalled: aiResponse.toolsCalled,
         evaluation: aiResponse.evaluation,
-        strategy: aiResponse.strategy
+        strategy: aiResponse.strategy as any
       };
       db.createMessage(aiMsg);
 

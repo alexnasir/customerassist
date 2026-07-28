@@ -207,40 +207,42 @@ export default function ChatView() {
   const latestAiMsg = [...messages].reverse().find(m => m.sender === 'ai' && m.strategy);
   const activeStrategy = latestAiMsg?.strategy || activeConv?.strategy;
 
+  const [showStrategyMobile, setShowStrategyMobile] = useState(false);
+
   return (
-    <div className="flex-1 bg-zinc-950 flex h-full" id="chat-view">
+    <div className="flex-1 bg-zinc-950 flex h-full relative overflow-hidden" id="chat-view">
       {/* LEFT PANEL: Conversation List */}
-      <div className="w-80 border-r border-zinc-800 bg-zinc-900 flex flex-col h-full shrink-0">
-        <div className="p-5 border-b border-zinc-800 flex items-center justify-between">
-          <h3 className="font-semibold text-white flex items-center gap-2">
+      <div className={`w-full md:w-80 border-r border-zinc-800 bg-zinc-900 flex flex-col h-full shrink-0 ${activeConv ? 'hidden md:flex' : 'flex'}`}>
+        <div className="p-4 sm:p-5 border-b border-zinc-800 flex items-center justify-between">
+          <h3 className="font-semibold text-white flex items-center gap-2 text-sm sm:text-base">
             <MessageSquare className="w-4 h-4 text-cyan-400" />
             Support Chats
           </h3>
           <button 
             onClick={startNewConversation}
-            className="p-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-xl transition-all"
+            className="p-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-xl transition-all min-h-[40px] min-w-[40px] flex items-center justify-center"
             title="Start New Chat"
           >
             <Plus className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+        <div className="flex-1 overflow-y-auto p-3 space-y-1.5 touch-scroll">
           {conversations.map((conv) => {
             const isActive = activeConv?.id === conv.id;
             return (
               <button
                 key={conv.id}
                 onClick={() => handleSelectConversation(conv)}
-                className={`w-full text-left p-4 rounded-2xl transition-all border ${
+                className={`w-full text-left p-3.5 sm:p-4 rounded-2xl transition-all border min-h-[48px] ${
                   isActive 
                     ? 'bg-zinc-800 border-zinc-700' 
                     : 'hover:bg-zinc-900 border-transparent'
                 }`}
               >
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-1.5">
                   <span className="font-medium text-white text-sm">{conv.customerName}</span>
-                  <span className={`text-[10px] font-mono uppercase px-2.5 py-0.5 rounded border ${
+                  <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded border ${
                     conv.status === 'escalated' 
                       ? 'bg-rose-950 text-rose-400 border-rose-900/30' 
                       : conv.status === 'resolved' 
@@ -250,9 +252,9 @@ export default function ChatView() {
                     {conv.status}
                   </span>
                 </div>
-                <p className="text-xs text-zinc-500">ID: {conv.id}</p>
+                <p className="text-xs text-zinc-500 font-mono">ID: {conv.id}</p>
                 {conv.rating && (
-                  <div className="flex items-center gap-1 mt-2 text-amber-400 text-xs">
+                  <div className="flex items-center gap-1 mt-1.5 text-amber-400 text-xs">
                     <Star className="w-3 h-3 fill-current" />
                     {conv.rating}/5
                   </div>
@@ -264,43 +266,62 @@ export default function ChatView() {
       </div>
 
       {/* CENTER PANEL: Messages Arena */}
-      <div className="flex-1 flex flex-col h-full bg-zinc-950">
+      <div className={`flex-1 flex-col h-full bg-zinc-950 min-w-0 ${activeConv ? 'flex' : 'hidden md:flex'}`}>
         {activeConv ? (
           <>
             {/* Active chat header */}
-            <div className="p-5 border-b border-zinc-800 bg-zinc-900 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-zinc-700 rounded-2xl flex items-center justify-center text-sm font-semibold text-white">
+            <div className="p-3.5 sm:p-5 border-b border-zinc-800 bg-zinc-900 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                {/* Mobile Back button */}
+                <button 
+                  onClick={() => setActiveConv(null)}
+                  className="md:hidden p-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl transition-all shrink-0"
+                  aria-label="Back to chat list"
+                >
+                  <ArrowRight className="w-4 h-4 rotate-180" />
+                </button>
+
+                <div className="w-8 h-8 bg-zinc-700 rounded-2xl flex items-center justify-center text-xs sm:text-sm font-semibold text-white shrink-0">
                   {activeConv.customerName.slice(0, 1)}
                 </div>
-                <div>
-                  <h4 className="font-semibold text-white">{activeConv.customerName}</h4>
-                  <div className="text-xs text-zinc-500 font-mono">ID: {activeConv.id}</div>
+                <div className="min-w-0">
+                  <h4 className="font-semibold text-white text-sm sm:text-base truncate">{activeConv.customerName}</h4>
+                  <div className="text-[10px] sm:text-xs text-zinc-500 font-mono truncate">ID: {activeConv.id}</div>
                 </div>
               </div>
 
-              {activeConv.status !== 'resolved' && (
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Toggle RAG strategy info panel on mobile */}
                 <button
-                  onClick={resolveConversation}
-                  className="text-sm px-5 py-2 bg-emerald-950 hover:bg-emerald-900 text-emerald-400 border border-emerald-900 rounded-2xl font-medium transition-all"
+                  onClick={() => setShowStrategyMobile(!showStrategyMobile)}
+                  className="lg:hidden p-2 bg-zinc-800 hover:bg-zinc-700 text-cyan-400 rounded-xl transition-all"
+                  title="View Strategy"
                 >
-                  Resolve Conversation
+                  <Sparkles className="w-4 h-4" />
                 </button>
-              )}
+
+                {activeConv.status !== 'resolved' && (
+                  <button
+                    onClick={resolveConversation}
+                    className="text-xs sm:text-sm px-3.5 sm:px-5 py-2 bg-emerald-950 hover:bg-emerald-900 text-emerald-400 border border-emerald-900 rounded-2xl font-medium transition-all min-h-[38px]"
+                  >
+                    Resolve
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Messages body */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-7">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-7 touch-scroll">
               {messages.map((msg) => {
                 const isUser = msg.sender === 'user';
                 const isAgent = msg.sender === 'agent';
-                const isAi = msg.sender === 'ai';
                 return (
                   <div
                     key={msg.id}
-                    className={`flex gap-4 max-w-[70%] ${isUser ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
+                    className={`flex gap-2.5 sm:gap-4 max-w-[90%] sm:max-w-[75%] ${isUser ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
                   >
-                    <div className={`w-8 h-8 rounded-2xl flex items-center justify-center shrink-0 text-xs font-semibold text-white ${
+                    <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-2xl flex items-center justify-center shrink-0 text-[10px] sm:text-xs font-semibold text-white ${
                       isUser 
                         ? 'bg-zinc-700' 
                         : isAgent 
@@ -310,28 +331,28 @@ export default function ChatView() {
                       {isUser ? 'U' : isAgent ? 'AG' : 'AI'}
                     </div>
 
-                    <div className={`px-5 py-4 rounded-3xl text-sm leading-relaxed border ${
+                    <div className={`px-4 sm:px-5 py-3 sm:py-4 rounded-3xl text-xs sm:text-sm leading-relaxed border ${
                       isUser 
                         ? 'bg-zinc-800 border-zinc-700 text-zinc-100 rounded-tr-none' 
                         : isAgent
                           ? 'bg-purple-950/50 border-purple-900/50 text-white rounded-tl-none'
                           : 'bg-zinc-900 border-zinc-800 text-zinc-100 rounded-tl-none'
                     }`}>
-                      <div className="text-[10px] text-zinc-500 mb-1.5 font-mono">
+                      <div className="text-[10px] text-zinc-500 mb-1 font-mono">
                         {msg.senderName} • {new Date(msg.timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
                       </div>
-                      <p>{msg.content}</p>
+                      <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                     </div>
                   </div>
                 );
               })}
 
               {loading && (
-                <div className="flex gap-4 max-w-[70%] mr-auto">
-                  <div className="w-8 h-8 rounded-2xl bg-zinc-800 flex items-center justify-center shrink-0">
-                    <Sparkles className="w-4 h-4 text-zinc-400 animate-pulse" />
+                <div className="flex gap-2.5 sm:gap-4 max-w-[90%] sm:max-w-[75%] mr-auto">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-2xl bg-zinc-800 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-3.5 h-3.5 text-zinc-400 animate-pulse" />
                   </div>
-                  <div className="bg-zinc-900 border border-zinc-800 px-5 py-4 rounded-3xl rounded-tl-none text-sm text-zinc-400 flex items-center gap-1">
+                  <div className="bg-zinc-900 border border-zinc-800 px-4 sm:px-5 py-3 sm:py-4 rounded-3xl rounded-tl-none text-xs sm:text-sm text-zinc-400 flex items-center gap-1">
                     <span className="animate-pulse">Thinking</span>
                     <span className="animate-pulse">.</span>
                     <span className="animate-pulse">.</span>
@@ -345,20 +366,20 @@ export default function ChatView() {
 
             {/* Warning Escalation notice */}
             {activeConv.status === 'escalated' && (
-              <div className="bg-rose-950/30 border-y border-rose-900 p-4 text-sm text-rose-300 flex items-center gap-3">
-                <AlertCircle className="w-5 h-5 shrink-0" />
+              <div className="bg-rose-950/30 border-y border-rose-900/50 p-3 sm:p-4 text-xs sm:text-sm text-rose-300 flex items-center gap-2.5">
+                <AlertCircle className="w-4 h-4 shrink-0" />
                 This conversation is escalated. AI automation is paused.
               </div>
             )}
 
             {/* Input field footer */}
-            <form onSubmit={handleSendMessage} className="p-5 border-t border-zinc-800 bg-zinc-900 flex gap-3">
-              <div className="flex items-center bg-zinc-950 border border-zinc-800 rounded-2xl px-4 text-xs">
-                <Globe className="w-4 h-4 text-zinc-400 mr-2" />
+            <form onSubmit={handleSendMessage} className="p-3 sm:p-5 border-t border-zinc-800 bg-zinc-900 flex gap-2 sm:gap-3">
+              <div className="flex items-center bg-zinc-950 border border-zinc-800 rounded-2xl px-2.5 sm:px-4 text-xs shrink-0">
+                <Globe className="w-3.5 h-3.5 text-zinc-400 mr-1.5" />
                 <select 
                   value={language} 
                   onChange={(e) => setLanguage(e.target.value as any)}
-                  className="bg-transparent outline-none text-zinc-200 py-3 pr-2 cursor-pointer"
+                  className="bg-transparent outline-none text-zinc-200 py-2.5 sm:py-3 pr-1 cursor-pointer text-xs"
                 >
                   <option value="auto">Auto</option>
                   <option value="en">EN</option>
@@ -372,26 +393,26 @@ export default function ChatView() {
                 onChange={(e) => setInputText(e.target.value)}
                 placeholder={activeConv.status === 'escalated' ? 'AI is paused while escalated...' : 'Ask about shipping, refunds, orders...'}
                 disabled={activeConv.status === 'escalated' || loading}
-                className="flex-1 bg-zinc-950 border border-zinc-800 focus:border-zinc-600 text-zinc-200 px-5 py-3.5 rounded-2xl outline-none disabled:opacity-50"
+                className="flex-1 bg-zinc-950 border border-zinc-800 focus:border-zinc-600 text-zinc-200 px-3.5 sm:px-5 py-2.5 sm:py-3.5 rounded-2xl outline-none text-sm disabled:opacity-50 min-w-0 min-h-[44px]"
               />
 
               <button
                 type="submit"
                 disabled={!inputText.trim() || activeConv.status === 'escalated' || loading}
-                className="bg-white text-zinc-950 px-6 rounded-2xl font-medium disabled:opacity-40 hover:bg-zinc-200 transition-all flex items-center justify-center"
+                className="bg-white text-zinc-950 px-4 sm:px-6 rounded-2xl font-medium disabled:opacity-40 hover:bg-zinc-200 transition-all flex items-center justify-center shrink-0 min-h-[44px]"
               >
                 <Send className="w-4 h-4" />
               </button>
             </form>
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-            <MessageSquare className="w-12 h-12 text-zinc-700 mb-6" />
-            <h4 className="text-white font-semibold text-xl">No Conversation Selected</h4>
-            <p className="text-zinc-500 mt-2 max-w-xs">Select a chat from the list or start a new one.</p>
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-6 sm:p-8">
+            <MessageSquare className="w-10 h-10 sm:w-12 sm:h-12 text-zinc-700 mb-4 sm:mb-6" />
+            <h4 className="text-white font-semibold text-lg sm:text-xl">No Conversation Selected</h4>
+            <p className="text-zinc-500 mt-2 text-xs sm:text-sm max-w-xs">Select a chat from the list or start a new one.</p>
             <button
               onClick={startNewConversation}
-              className="mt-6 bg-white text-zinc-950 px-6 py-2.5 rounded-2xl font-medium hover:bg-zinc-100 transition-all flex items-center gap-2"
+              className="mt-6 bg-white text-zinc-950 px-6 py-3 rounded-2xl font-medium hover:bg-zinc-100 transition-all flex items-center gap-2 text-sm min-h-[44px]"
             >
               <Plus className="w-4 h-4" />
               New Conversation
@@ -402,48 +423,58 @@ export default function ChatView() {
 
       {/* RIGHT PANEL: RAG Context & Citations */}
       {activeConv && (
-        <div className="w-80 border-l border-zinc-800 bg-zinc-900 p-6 flex flex-col h-full overflow-y-auto shrink-0">
-          <h3 className="uppercase text-xs tracking-widest font-semibold text-zinc-400 mb-6 flex items-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-            RAG Retriever
-          </h3>
+        <div className={`w-full lg:w-80 border-l border-zinc-800 bg-zinc-900 p-5 sm:p-6 flex flex-col h-full overflow-y-auto shrink-0 touch-scroll ${showStrategyMobile ? 'fixed inset-0 z-40 bg-zinc-900' : 'hidden lg:flex'}`}>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="uppercase text-xs tracking-widest font-semibold text-zinc-400 flex items-center gap-2">
+              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+              RAG Retriever
+            </h3>
+            {showStrategyMobile && (
+              <button 
+                onClick={() => setShowStrategyMobile(false)}
+                className="lg:hidden text-xs text-zinc-400 hover:text-white px-3 py-1 bg-zinc-800 rounded-xl"
+              >
+                Close
+              </button>
+            )}
+          </div>
 
           <div className="space-y-6">
-            <div className="bg-zinc-950 border border-zinc-800 p-5 rounded-3xl">
-              <div className="text-xs font-mono text-cyan-400 mb-3 tracking-widest">STRATEGY</div>
-              <p className="text-sm text-zinc-400">The agent queries the knowledge base and injects relevant context before generating each reply.</p>
+            <div className="bg-zinc-950 border border-zinc-800 p-4 sm:p-5 rounded-3xl">
+              <div className="text-[10px] font-mono text-cyan-400 mb-2 tracking-widest">STRATEGY</div>
+              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">The agent queries the knowledge base and injects relevant context before generating each reply.</p>
             </div>
 
             {/* Active Strategy */}
-            <div className="bg-zinc-950 border border-zinc-800 p-5 rounded-3xl">
-              <div className="text-xs font-mono text-emerald-400 mb-4 flex items-center gap-2 tracking-widest">
+            <div className="bg-zinc-950 border border-zinc-800 p-4 sm:p-5 rounded-3xl">
+              <div className="text-[10px] font-mono text-emerald-400 mb-3 flex items-center gap-2 tracking-widest">
                 ACTIVE STRATEGY
               </div>
               {activeStrategy ? (
-                <div className="space-y-5 text-sm">
+                <div className="space-y-4 text-xs sm:text-sm">
                   <div>
-                    <div className="text-zinc-500 text-xs mb-1">TYPE</div>
+                    <div className="text-zinc-500 text-[10px] font-mono mb-1">TYPE</div>
                     <div className="font-medium text-white">{activeStrategy.strategyType}</div>
                   </div>
                   <div>
-                    <div className="text-zinc-500 text-xs mb-1">REASONING</div>
-                    <p className="text-zinc-300 text-sm leading-relaxed border-l border-emerald-900 pl-3">{activeStrategy.reasoning}</p>
+                    <div className="text-zinc-500 text-[10px] font-mono mb-1">REASONING</div>
+                    <p className="text-zinc-300 text-xs sm:text-sm leading-relaxed border-l border-emerald-900 pl-3">{activeStrategy.reasoning}</p>
                   </div>
                 </div>
               ) : (
-                <p className="text-zinc-500 text-sm italic">Send a message to activate strategy engine</p>
+                <p className="text-zinc-500 text-xs sm:text-sm italic">Send a message to activate strategy engine</p>
               )}
             </div>
 
             {/* Retrieved Sources */}
-            <div className="bg-zinc-950 border border-zinc-800 p-5 rounded-3xl">
-              <div className="text-xs font-mono text-indigo-400 mb-4 tracking-widest">RETRIEVED SOURCES</div>
+            <div className="bg-zinc-950 border border-zinc-800 p-4 sm:p-5 rounded-3xl">
+              <div className="text-[10px] font-mono text-indigo-400 mb-3 tracking-widest">RETRIEVED SOURCES</div>
               {retrievedSources.length > 0 ? (
                 <div className="space-y-2">
                   {retrievedSources.map((src, i) => (
-                    <div key={i} className="text-xs bg-zinc-900 border border-zinc-800 p-3 rounded-2xl text-zinc-400 flex items-start gap-3">
-                      <FileText className="w-4 h-4 mt-0.5 text-zinc-500" />
-                      {src}
+                    <div key={i} className="text-xs bg-zinc-900 border border-zinc-800 p-3 rounded-2xl text-zinc-400 flex items-start gap-2.5">
+                      <FileText className="w-4 h-4 mt-0.5 text-zinc-500 shrink-0" />
+                      <span className="break-words min-w-0">{src}</span>
                     </div>
                   ))}
                 </div>

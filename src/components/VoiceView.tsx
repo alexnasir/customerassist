@@ -413,11 +413,11 @@ export default function VoiceView() {
   };
 
   return (
-    <div className="flex-1 bg-zinc-950 p-8 overflow-y-auto flex flex-col md:flex-row gap-8" id="voice-view">
+    <div className="flex-1 bg-zinc-950 p-4 sm:p-8 overflow-y-auto flex flex-col md:flex-row gap-6 sm:gap-8 touch-scroll" id="voice-view">
       {/* LEFT: Central Voice Console */}
-      <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-3xl p-10 flex flex-col items-center justify-center relative min-h-[520px]">
+      <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-3xl p-6 sm:p-10 flex flex-col items-center justify-center relative min-h-[420px] sm:min-h-[520px]">
         {/* Dynamic status tag */}
-        <span className={`absolute top-8 px-4 py-1 rounded-full text-xs font-mono uppercase tracking-[0.5px] flex items-center gap-1.5 border ${
+        <span className={`absolute top-6 sm:top-8 px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-mono uppercase tracking-wider flex items-center gap-1.5 border ${
           voiceStatus === 'recording' 
             ? 'bg-rose-950 text-rose-400 border-rose-900/50'
             : voiceStatus === 'speaking' 
@@ -431,26 +431,26 @@ export default function VoiceView() {
         </span>
 
         {/* Beautiful Pulsing Waveform Ring */}
-        <div className="my-12 relative flex items-center justify-center">
+        <div className="my-8 sm:my-12 relative flex items-center justify-center">
           {voiceStatus === 'recording' && (
             <>
-              <div className="absolute w-52 h-52 bg-rose-500/10 rounded-full animate-ping" />
-              <div className="absolute w-40 h-40 bg-rose-500/20 rounded-full animate-ping" style={{ animationDelay: '280ms' }} />
+              <div className="absolute w-44 sm:w-52 h-44 sm:h-52 bg-rose-500/10 rounded-full animate-ping" />
+              <div className="absolute w-32 sm:w-40 h-32 sm:h-40 bg-rose-500/20 rounded-full animate-ping" style={{ animationDelay: '280ms' }} />
             </>
           )}
           {voiceStatus === 'speaking' && (
             <>
-              <div className="absolute w-52 h-52 bg-emerald-500/10 rounded-full animate-pulse" />
-              <div className="absolute w-40 h-40 bg-emerald-500/20 rounded-full animate-pulse" style={{ animationDelay: '280ms' }} />
+              <div className="absolute w-44 sm:w-52 h-44 sm:h-52 bg-emerald-500/10 rounded-full animate-pulse" />
+              <div className="absolute w-32 sm:w-40 h-32 sm:h-40 bg-emerald-500/20 rounded-full animate-pulse" style={{ animationDelay: '280ms' }} />
             </>
           )}
           {voiceStatus === 'processing' && (
-            <div className="absolute w-48 h-48 border-4 border-zinc-700 border-t-zinc-400 rounded-full animate-spin" />
+            <div className="absolute w-40 sm:w-48 h-40 sm:h-48 border-4 border-zinc-700 border-t-zinc-400 rounded-full animate-spin" />
           )}
 
           <button
             onClick={handleMicrophoneClick}
-            className={`relative z-10 w-32 h-32 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 border-4 border-zinc-800 ${
+            className={`relative z-10 w-28 h-28 sm:w-32 sm:h-32 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 border-4 border-zinc-800 active:scale-95 ${
               voiceStatus === 'recording'
                 ? 'bg-rose-600 hover:bg-rose-500'
                 : voiceStatus === 'speaking'
@@ -458,13 +458,13 @@ export default function VoiceView() {
                   : 'bg-white text-zinc-950 hover:bg-zinc-100'
             }`}
           >
-            {voiceStatus === 'recording' ? <MicOff className="w-12 h-12" /> : <Mic className="w-12 h-12" />}
+            {voiceStatus === 'recording' ? <MicOff className="w-10 h-10 sm:w-12 sm:h-12" /> : <Mic className="w-10 h-10 sm:w-12 sm:h-12" />}
           </button>
         </div>
 
         {/* Quick Instructions / Guidance */}
-        <div className="text-center max-w-sm">
-          <p className="text-zinc-200 font-medium">
+        <div className="text-center max-w-sm px-2">
+          <p className="text-zinc-200 text-sm sm:text-base font-medium">
             {voiceStatus === 'idle' && 'Click the microphone to begin conversation'}
             {voiceStatus === 'recording' && 'Listening — click again to send'}
             {voiceStatus === 'processing' && 'Processing your request...'}
@@ -476,20 +476,20 @@ export default function VoiceView() {
         </div>
 
         {/* Language & Voice Selector */}
-        <div className="w-full max-w-md mt-10 bg-zinc-950 border border-zinc-800 p-6 rounded-3xl">
-          <div className="flex gap-6">
+        <div className="w-full max-w-md mt-6 sm:mt-10 bg-zinc-950 border border-zinc-800 p-4 sm:p-6 rounded-3xl">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
             <div className="flex-1">
-              <label className="block text-xs font-mono uppercase tracking-widest text-zinc-500 mb-2">Language</label>
+              <label className="block text-[10px] font-mono uppercase tracking-widest text-zinc-500 mb-2">Language</label>
               <div className="flex bg-zinc-900 rounded-2xl p-1 border border-zinc-800">
                 <button
                   onClick={() => setSelectedLanguage('en')}
-                  className={`flex-1 py-3 text-sm font-medium rounded-xl transition-all ${selectedLanguage === 'en' ? 'bg-white text-zinc-950 shadow' : 'text-zinc-400'}`}
+                  className={`flex-1 py-2.5 sm:py-3 text-xs sm:text-sm font-medium rounded-xl transition-all min-h-[40px] ${selectedLanguage === 'en' ? 'bg-white text-zinc-950 shadow' : 'text-zinc-400'}`}
                 >
                   English
                 </button>
                 <button
                   onClick={() => setSelectedLanguage('sw')}
-                  className={`flex-1 py-3 text-sm font-medium rounded-xl transition-all ${selectedLanguage === 'sw' ? 'bg-white text-zinc-950 shadow' : 'text-zinc-400'}`}
+                  className={`flex-1 py-2.5 sm:py-3 text-xs sm:text-sm font-medium rounded-xl transition-all min-h-[40px] ${selectedLanguage === 'sw' ? 'bg-white text-zinc-950 shadow' : 'text-zinc-400'}`}
                 >
                   Kiswahili
                 </button>
@@ -497,11 +497,11 @@ export default function VoiceView() {
             </div>
 
             <div className="flex-1">
-              <label className="block text-xs font-mono uppercase tracking-widest text-zinc-500 mb-2">Voice</label>
+              <label className="block text-[10px] font-mono uppercase tracking-widest text-zinc-500 mb-2">Voice</label>
               <select
                 value={selectedVoice}
                 onChange={(e) => setSelectedVoice(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-800 text-sm text-white px-4 py-3 rounded-2xl outline-none"
+                className="w-full bg-zinc-900 border border-zinc-800 text-xs sm:text-sm text-white px-3.5 py-2.5 sm:py-3 rounded-2xl outline-none min-h-[44px] cursor-pointer"
               >
                 <option value="Zephyr">Zephyr (Mellow Male)</option>
                 <option value="Kore">Kore (Polite Female)</option>
@@ -521,38 +521,38 @@ export default function VoiceView() {
       </div>
 
       {/* RIGHT: Real-time Transcript & Suggested Scenarios */}
-      <div className="w-full md:w-96 flex flex-col gap-6 shrink-0">
+      <div className="w-full md:w-80 lg:w-96 flex flex-col gap-6 shrink-0">
         {/* Real-time Transcription Log */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-7 flex-1 flex flex-col">
-          <h4 className="font-semibold text-white flex items-center gap-2 mb-5">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-7 flex-1 flex flex-col min-h-[220px]">
+          <h4 className="font-semibold text-white flex items-center gap-2 mb-4 sm:mb-5 text-sm sm:text-base">
             <Activity className="w-4 h-4 text-cyan-400" />
             Live Dialogue Console
           </h4>
 
           {errorMsg && (
-            <div className="mb-6 bg-rose-950/30 border border-rose-900/50 text-rose-400 p-4 rounded-2xl flex gap-3 text-sm">
-              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <div className="mb-4 bg-rose-950/30 border border-rose-900/50 text-rose-400 p-3.5 rounded-2xl flex gap-2.5 text-xs sm:text-sm">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               {errorMsg}
             </div>
           )}
 
-          <div className="flex-1 space-y-6 overflow-y-auto pr-1">
+          <div className="flex-1 space-y-4 sm:space-y-6 overflow-y-auto pr-1 max-h-[300px] md:max-h-none touch-scroll">
             {userTranscript && (
-              <div className="bg-zinc-950 border border-zinc-800 p-5 rounded-2xl">
-                <div className="text-cyan-400 text-xs font-mono tracking-widest mb-2">YOU</div>
-                <p className="text-zinc-100 text-sm leading-relaxed">{userTranscript}</p>
+              <div className="bg-zinc-950 border border-zinc-800 p-4 rounded-2xl">
+                <div className="text-cyan-400 text-[10px] font-mono tracking-widest mb-1.5">YOU</div>
+                <p className="text-zinc-100 text-xs sm:text-sm leading-relaxed">{userTranscript}</p>
               </div>
             )}
 
             {aiResponseText && (
-              <div className="bg-zinc-950 border border-zinc-800 p-5 rounded-2xl">
-                <div className="text-emerald-400 text-xs font-mono tracking-widest mb-2">DUKA LETU AGENT</div>
-                <p className="text-zinc-200 text-sm leading-relaxed">{aiResponseText}</p>
+              <div className="bg-zinc-950 border border-zinc-800 p-4 rounded-2xl">
+                <div className="text-emerald-400 text-[10px] font-mono tracking-widest mb-1.5">DUKA LETU AGENT</div>
+                <p className="text-zinc-200 text-xs sm:text-sm leading-relaxed">{aiResponseText}</p>
               </div>
             )}
 
             {!userTranscript && !aiResponseText && (
-              <div className="h-full flex items-center justify-center text-center text-zinc-500 text-sm py-10">
+              <div className="h-full flex items-center justify-center text-center text-zinc-500 text-xs sm:text-sm py-8 sm:py-10">
                 Your conversation will appear here
               </div>
             )}
@@ -560,26 +560,26 @@ export default function VoiceView() {
         </div>
 
         {/* Suggested Scenarios */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-7">
-          <h4 className="font-semibold text-white flex items-center gap-2 mb-2">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-7">
+          <h4 className="font-semibold text-white flex items-center gap-2 mb-1.5 text-sm sm:text-base">
             <Compass className="w-4 h-4 text-cyan-400" />
             Quick Scenarios
           </h4>
-          <p className="text-xs text-zinc-500 mb-6">Click any example to instantly run a full voice interaction flow.</p>
+          <p className="text-xs text-zinc-500 mb-4 sm:mb-6">Click any example to instantly run a full voice interaction flow.</p>
           
-          <div className="space-y-3">
+          <div className="space-y-2.5 sm:space-y-3">
             {voicePrompts.map((prompt, i) => (
               <button
                 key={i}
                 onClick={() => selectSuggestedPrompt(prompt)}
-                className="group w-full flex items-center gap-4 bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 hover:border-zinc-700 p-5 rounded-2xl transition-all text-left"
+                className="group w-full flex items-center gap-3.5 bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 hover:border-zinc-700 p-3.5 sm:p-4 rounded-2xl transition-all text-left min-h-[48px]"
               >
-                <div className="text-2xl bg-zinc-900 px-3 py-2 rounded-2xl border border-zinc-800">{prompt.icon}</div>
+                <div className="text-xl sm:text-2xl bg-zinc-900 px-2.5 py-1.5 rounded-2xl border border-zinc-800 shrink-0">{prompt.icon}</div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-zinc-200 line-clamp-1 group-hover:text-white">{prompt.text}</p>
-                  <p className="text-xs text-zinc-500 font-mono mt-1">{prompt.lang.toUpperCase()}</p>
+                  <p className="text-xs sm:text-sm text-zinc-200 line-clamp-1 group-hover:text-white">{prompt.text}</p>
+                  <p className="text-[10px] text-zinc-500 font-mono mt-0.5">{prompt.lang.toUpperCase()}</p>
                 </div>
-                <Play className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" />
+                <Play className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors shrink-0" />
               </button>
             ))}
           </div>

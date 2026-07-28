@@ -23,14 +23,15 @@ async function generateContentWithRetry(params: {
 }) {
   const originalModel = params.model;
   
-  // Define fallback models only for general text models (e.g. gemini-3.5-flash)
+  // Define fallback models only for general text models (e.g. gemini-3.6-flash)
   const isGeneralTextModel = 
+    originalModel.startsWith('gemini-3.6-flash') || 
     originalModel.startsWith('gemini-3.5-flash') || 
     originalModel.startsWith('gemini-flash') || 
     originalModel.startsWith('gemini-3.1-flash-lite');
   
   const modelsToTry = isGeneralTextModel 
-    ? [originalModel, 'gemini-3.1-flash-lite', 'gemini-flash-latest'] 
+    ? [originalModel, 'gemini-3.6-flash', 'gemini-3.1-flash-lite', 'gemini-flash-latest'] 
     : [originalModel];
 
   let lastError: any = null;
@@ -156,193 +157,95 @@ async function classifyAndStrategize(params: {
 }) {
   const { userMessage, messageHistory, customerMemory } = params;
 
-  const prompt = `You are the Duka Letu Customer Support Classification & Strategy Engine.
-Analyze the user's message, conversation history, and customer memory to extract language, intents, sentiment, key entities, and determine the optimal resolution strategy in a single unified analysis step.
-
-USER MESSAGE: "${userMessage}"
-
-CONVERSATION HISTORY:
-${messageHistory}
-
-CUSTOMER MEMORY:
-${JSON.stringify(customerMemory)}
-
-INSTRUCTIONS FOR CLASSIFICATION:
-Intents:
-- "order_tracking": Asking where package/order is.
-- "shipping_delivery": Shipping times, costs, methods, delivery areas.
-- "refund_request": Requesting refunds, returns money back.
-- "return_request": Asking how to return an item, policies.
-- "payment_issue": Billing errors, failed payments, M-Pesa checks, transaction queries.
-- "account_issue": Account details, profiles, premium status.
-- "login_issue": Login errors, locking out.
-- "password_reset": Explicit password change request.
-- "product_inquiry": Size, material, stock queries.
-- "pricing_question": Coupon, price, discount checks.
-- "sales_inquiry": Bulk buys, B2B, pre-sales.
-- "technical_support": App crashing, voice bugs, web errors.
-- "complaint": Active frustration with service/products.
-- "human_agent": Speak to human agent, person, representative.
-- "greeting": Hello, sasa, habari.
-- "goodbye": Bye, thank you, asante, kwa heri.
-- "general_faq": Store locations, hours, simple policies.
-- "unknown": Unclear, gibberish.
-
-Sentiments:
-- "positive": Happy, thanking, cheerfully saying hello.
-- "neutral": Standard queries, no strong emotion.
-- "frustrated": Annoyed, mentioning delays, "still hasn't arrived".
-- "angry": Highly upset, using caps, demands escalation.
-- "urgent": Highly time-sensitive, "ASAP", "urgent", "need it today".
-
-Languages:
-- "en": English
-- "sw": Kiswahili
-- "sheng": Nairobi Sheng slang
-- "mixed": Mixture of Kiswahili and English
-
-Entities to extract:
-- "orderId": Match "OMNI-[0-9]+" or "#OMNI-[0-9]+" (strip the '#' if present).
-- "transactionId": Match "TXN-[0-9]+" or MPesa codes.
-- "refundAmount": Any numbers mentioned alongside refunds.
-
-INSTRUCTIONS FOR STRATEGY:
-Available Strategy Types:
-1. "Empathetic De-escalation": Select when customer sentiment is angry, frustrated, or they have a complaint.
-2. "Step-by-Step Diagnostic": Select when there is a technical support issue, login issue, or complex billing/refund task requiring sequential steps.
-3. "Direct Resolution": Select for simple FAQs, greetings, goodbye, order tracking, where a quick straightforward answer works best.
-4. "Proactive Clarification": Select when required inputs like orderId, transactionId, or specific details are missing, and you need to politely ask for them.
-5. "Educational Onboarding": Select when the user asks questions about rules, procedures, "how-to", return periods, etc.
-6. "General Guidance": Fallback for standard or ambiguous chat.
-
-Determine goals (3 to 4 actionable milestones, e.g. "Identify customer problem", "Check order history") and recommended tactics (3 to 4 specific guidelines, e.g., "Use simple Kiswahili/Sheng to build rapport", "Acknowledge frustration").
-
-Return EXACTLY a JSON object conforming to the schema.`;
-
-  try {
-    const response = await generateContentWithRetry({
-      model: 'gemini-3.5-flash',
-      contents: prompt,
-      config: {
-        temperature: 0.1,
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            language: { type: Type.STRING },
-            languageConfidence: { type: Type.NUMBER },
-            primaryIntent: { type: Type.STRING },
-            primaryIntentConfidence: { type: Type.NUMBER },
-            secondaryIntent: { type: Type.STRING },
-            secondaryIntentConfidence: { type: Type.NUMBER },
-            sentiment: { type: Type.STRING },
-            sentimentConfidence: { type: Type.NUMBER },
-            orderId: { type: Type.STRING, nullable: true },
-            transactionId: { type: Type.STRING, nullable: true },
-            refundAmount: { type: Type.NUMBER, nullable: true },
-
-            strategyType: {
-              type: Type.STRING,
-              enum: [
-                'Empathetic De-escalation',
-                'Step-by-Step Diagnostic',
-                'Direct Resolution',
-                'Proactive Clarification',
-                'Educational Onboarding',
-                'General Guidance'
-              ]
-            },
-            confidenceScore: { type: Type.NUMBER },
-            reasoning: { type: Type.STRING },
-            recommendedTactics: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING }
-            },
-            goals: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  description: { type: Type.STRING },
-                  achieved: { type: Type.BOOLEAN }
-                },
-                required: ['description', 'achieved']
-              }
-            }
-          },
-          required: [
-            'language', 'languageConfidence', 'primaryIntent', 'primaryIntentConfidence', 
-            'sentiment', 'sentimentConfidence', 'strategyType', 'confidenceScore', 
-            'reasoning', 'recommendedTactics', 'goals'
-          ]
-        }
-      }
-    });
-
-    const parsed = JSON.parse(response.text || '{}');
+  // Ultra-fast path for simple greetings, farewells, and acknowledgments (0ms LLM overhead)
+  const lowerMsg = userMessage.trim().toLowerCase();
+  const simpleGreetings = ['hi', 'hello', 'hey', 'habari', 'mambo', 'jambo', 'sasa', 'good morning', 'good afternoon', 'good evening', 'thanks', 'thank you', 'asante', 'kwa heri', 'bye'];
+  if (simpleGreetings.includes(lowerMsg)) {
+    const isSw = ['habari', 'mambo', 'jambo', 'sasa', 'asante', 'kwa heri'].includes(lowerMsg);
     return {
       classification: {
-        language: parsed.language || 'en',
-        languageConfidence: parsed.languageConfidence ?? 0.90,
-        primaryIntent: parsed.primaryIntent || 'general_faq',
-        primaryIntentConfidence: parsed.primaryIntentConfidence ?? 0.90,
-        secondaryIntent: parsed.secondaryIntent || 'unknown',
-        secondaryIntentConfidence: parsed.secondaryIntentConfidence ?? 0.10,
-        sentiment: parsed.sentiment || 'neutral',
-        sentimentConfidence: parsed.sentimentConfidence ?? 0.90,
-        orderId: parsed.orderId || null,
-        transactionId: parsed.transactionId || null,
-        refundAmount: parsed.refundAmount || null
-      },
-      strategy: {
-        strategyType: parsed.strategyType || 'General Guidance',
-        confidenceScore: parsed.confidenceScore ?? 0.90,
-        reasoning: parsed.reasoning || 'Standard response protocol.',
-        recommendedTactics: parsed.recommendedTactics || ['Be helpful', 'Maintain polite language'],
-        goals: parsed.goals || [{ description: 'Assist customer', achieved: false }]
-      }
-    };
-  } catch (err) {
-    console.error('Unified classifyAndStrategize failed, running robust fallback:', err);
-    // Dynamic local fallback to keep the app functional under high load or network failure
-    const lower = userMessage.toLowerCase();
-    let primaryIntent = 'general_faq';
-    if (lower.includes('order') || lower.includes('oda') || lower.includes('package') || lower.includes('mzigo')) {
-      primaryIntent = 'order_tracking';
-    } else if (lower.includes('refund') || lower.includes('rudisha pesa')) {
-      primaryIntent = 'refund_request';
-    } else if (lower.includes('return') || lower.includes('rudisha')) {
-      primaryIntent = 'return_request';
-    } else if (lower.includes('agent') || lower.includes('mhudumu') || lower.includes('ongea na mtu')) {
-      primaryIntent = 'human_agent';
-    }
-
-    const orderMatch = userMessage.match(/OMNI-\d+/i);
-    const orderId = orderMatch ? orderMatch[0].toUpperCase() : null;
-
-    return {
-      classification: {
-        language: 'en',
-        languageConfidence: 0.80,
-        primaryIntent,
-        primaryIntentConfidence: 0.80,
-        secondaryIntent: 'unknown',
+        language: isSw ? 'sw' : 'en',
+        languageConfidence: 0.99,
+        primaryIntent: (lowerMsg === 'bye' || lowerMsg === 'kwa heri') ? 'goodbye' : 'greeting',
+        primaryIntentConfidence: 0.99,
+        secondaryIntent: 'general_faq',
         secondaryIntentConfidence: 0.10,
-        sentiment: 'neutral',
-        sentimentConfidence: 0.80,
-        orderId,
+        sentiment: 'positive',
+        sentimentConfidence: 0.95,
+        orderId: null,
         transactionId: null,
         refundAmount: null
       },
       strategy: {
-        strategyType: 'General Guidance',
-        confidenceScore: 0.80,
-        reasoning: 'Fallback strategy due to unified engine exception.',
-        recommendedTactics: ['Be helpful', 'Speak politely', 'Keep it simple'],
-        goals: [{ description: 'Resolve the customer query', achieved: false }]
+        strategyType: 'Direct Resolution',
+        confidenceScore: 0.99,
+        reasoning: 'Instant greeting response protocol.',
+        recommendedTactics: ['Greet the customer warmly', 'Offer immediate assistance'],
+        goals: [{ description: 'Welcome the customer and ask how to help', achieved: true }]
       }
     };
   }
+
+  // Fast local entity & intent extraction (0ms overhead)
+  const orderMatch = userMessage.match(/#?(OMNI-\d+)/i);
+  const orderId = orderMatch ? orderMatch[1].toUpperCase() : null;
+
+  const txnMatch = userMessage.match(/(TXN-\d+|MPESA-[A-Z0-9]+)/i);
+  const transactionId = txnMatch ? txnMatch[1].toUpperCase() : null;
+
+  let primaryIntent = 'general_faq';
+  if (/where|track|ship|deliver|package|status|omni-/i.test(lowerMsg)) {
+    primaryIntent = 'order_tracking';
+  } else if (/refund|return|money back|cashback/i.test(lowerMsg)) {
+    primaryIntent = 'refund_request';
+  } else if (/pay|mpesa|txn|billing|card|charge|double/i.test(lowerMsg)) {
+    primaryIntent = 'payment_issue';
+  } else if (/account|login|password|profile|tier/i.test(lowerMsg)) {
+    primaryIntent = 'account_issue';
+  } else if (/agent|human|person|speak to someone|ongea na mtu|mhudumu/i.test(lowerMsg)) {
+    primaryIntent = 'human_agent';
+  }
+
+  let language = 'en';
+  if (/sasa|habari|mambo|jambo|asante|kwa heri|shilingi|rafiki|mhudumu|mbili|tatu|nne|tano/i.test(lowerMsg)) {
+    language = 'sw';
+  } else if (/msee|vile|mzigo|raba|forma|maneno|mbogi/i.test(lowerMsg)) {
+    language = 'sheng';
+  }
+
+  let sentiment = 'neutral';
+  if (/angry|upset|worst|terrible|scam|hate|disappointed|late|delayed|taking forever/i.test(lowerMsg)) {
+    sentiment = 'frustrated';
+  } else if (/thanks|thank you|great|awesome|good|asante/i.test(lowerMsg)) {
+    sentiment = 'positive';
+  }
+
+  // Fast return for pattern-matched query to avoid duplicate LLM calls
+  return {
+    classification: {
+      language,
+      languageConfidence: 0.90,
+      primaryIntent,
+      primaryIntentConfidence: 0.90,
+      secondaryIntent: 'general_faq',
+      secondaryIntentConfidence: 0.20,
+      sentiment,
+      sentimentConfidence: 0.85,
+      orderId,
+      transactionId,
+      refundAmount: null
+    },
+    strategy: {
+      strategyType: (sentiment === 'frustrated' ? 'Empathetic De-escalation' : 'Direct Resolution') as any,
+      confidenceScore: 0.90,
+      reasoning: 'Fast-path intent and entity routing.',
+      recommendedTactics: ['Provide swift and direct support', 'Use customer preferred language'],
+      goals: [
+        { description: 'Identify issue and resolve', achieved: true },
+        { description: 'Provide accurate information', achieved: true }
+      ]
+    }
+  };
 }
 
 /**
@@ -827,7 +730,7 @@ Please act as both the Specialist Support Agent and the Response Evaluation/Self
 
     try {
       const response = await generateContentWithRetry({
-        model: 'gemini-3.5-flash',
+        model: 'gemini-3.6-flash',
         contents: promptText,
         config: {
           systemInstruction: fullSystemInstruction,
@@ -1000,7 +903,7 @@ If uncertain, return "en".
 User message: "${text}"`;
 
       const response = await generateContentWithRetry({
-        model: 'gemini-3.5-flash',
+        model: 'gemini-3.6-flash',
         contents: prompt,
         config: {
           temperature: 0.1,
@@ -1040,7 +943,7 @@ User message: "${text}"`;
   async transcribeAudio(base64Audio: string, language?: 'en' | 'sw'): Promise<string> {
     try {
       const response = await generateContentWithRetry({
-        model: 'gemini-3.5-flash',
+        model: 'gemini-3.6-flash',
         contents: [
           {
             inlineData: {
@@ -1454,7 +1357,7 @@ Rate the prompt score out of 100 based on:
 Return the score as a JSON object with a single "score" integer field.`;
 
       const response = await generateContentWithRetry({
-        model: 'gemini-3.5-flash',
+        model: 'gemini-3.6-flash',
         contents: evaluationInstruction,
         config: {
           temperature: 0.1,
@@ -1537,7 +1440,7 @@ Text to classify: "${text}"
 Return exactly a JSON object with a single field "class" which is either "sw", "en", or "mixed".`;
 
       const response = await generateContentWithRetry({
-        model: 'gemini-3.5-flash',
+        model: 'gemini-3.6-flash',
         contents: prompt,
         config: {
           temperature: 0.1,
@@ -1982,7 +1885,7 @@ Input text: "${text}"
 Optimized Kiswahili Speech Text:`;
 
     const response = await generateContentWithRetry({
-      model: 'gemini-3.5-flash',
+      model: 'gemini-3.6-flash',
       contents: prompt,
       config: {
         temperature: 0.2
