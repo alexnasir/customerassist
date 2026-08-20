@@ -530,7 +530,7 @@ export default function VoiceView() {
             type="text"
             value={customTextInput}
             onChange={(e) => setCustomTextInput(e.target.value)}
-            placeholder={selectedLanguage === 'sw' ? 'Andika swali hapa (utapata jibu la sauti)...' : 'Type message here (response will be spoken)...'}
+            placeholder={selectedLanguage === 'sw' ? 'Andika swali hapa (utapata jibu la sauti)...' : 'Type your message here (response will be spoken)...'}
             disabled={voiceStatus === 'processing'}
             className="flex-1 bg-transparent text-xs sm:text-sm text-zinc-100 placeholder:text-zinc-600 px-3 py-2 outline-none min-h-[40px]"
           />
