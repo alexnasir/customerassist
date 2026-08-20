@@ -11,9 +11,36 @@ import SystemLogsView from './components/SystemLogsView.tsx';
 import StorefrontView from './components/StorefrontView.tsx';
 import { User } from './types.ts';
 
+const AUTH_STORAGE_KEY = 'duka_letu_auth_user';
+const TAB_STORAGE_KEY = 'duka_letu_active_tab';
+
 export default function App() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    try {
+      const savedUser = localStorage.getItem(AUTH_STORAGE_KEY);
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    try {
+      const savedTab = localStorage.getItem(TAB_STORAGE_KEY);
+      if (savedTab) return savedTab;
+      const savedUser = localStorage.getItem(AUTH_STORAGE_KEY);
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        if (parsed.role === 'admin') return 'voice';
+        if (parsed.role === 'customer') return 'chat';
+        if (parsed.role === 'visitor') return 'storefront';
+      }
+      return 'dashboard';
+    } catch {
+      return 'dashboard';
+    }
+  });
+
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   
   // Auth Form State
@@ -21,6 +48,13 @@ export default function App() {
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    try {
+      localStorage.setItem(TAB_STORAGE_KEY, tab);
+    } catch {}
+  };
 
   // Quick Account Select for Reviewers
   const demoAccounts = [
@@ -48,17 +82,23 @@ export default function App() {
       if (res.ok) {
         const data = await res.json();
         setCurrentUser(data.user);
+        try {
+          localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(data.user));
+        } catch {}
         
         // Auto route to appropriate view based on role
+        let targetTab = 'dashboard';
         if (data.user.role === 'admin') {
-          setActiveTab('voice');
+          targetTab = 'voice';
         } else if (data.user.role === 'customer') {
-          setActiveTab('chat');
+          targetTab = 'chat';
         } else if (data.user.role === 'visitor') {
-          setActiveTab('storefront');
-        } else {
-          setActiveTab('dashboard');
+          targetTab = 'storefront';
         }
+        setActiveTab(targetTab);
+        try {
+          localStorage.setItem(TAB_STORAGE_KEY, targetTab);
+        } catch {}
       } else {
         const err = await res.json();
         setAuthError(err.error || 'Invalid credentials');
@@ -77,6 +117,10 @@ export default function App() {
     setPassword('');
     setActiveTab('dashboard');
     setIsMobileOpen(false);
+    try {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      localStorage.removeItem(TAB_STORAGE_KEY);
+    } catch {}
   };
 
   if (!currentUser) {
@@ -211,7 +255,7 @@ export default function App() {
       {/* Platform Sidebar */}
       <Sidebar 
         activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
+        setActiveTab={handleTabChange} 
         currentUser={currentUser}
         onLogout={handleLogout}
         isMobileOpen={isMobileOpen}
