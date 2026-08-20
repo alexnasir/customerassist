@@ -1,6 +1,8 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import { db } from './db.js';
 import { ConversationStrategy } from '../types.js';
+import { vectorStore } from './vectorStore.js';
+import { langgraphEngine } from './langgraphEngine.js';
 
 // Initialize the Google GenAI SDK on the server-side with the correct header
 const ai = new GoogleGenAI({
@@ -500,61 +502,11 @@ export const geminiService = {
         break;
     }
 
-    // --- PHASE 4: ADVANCED HYBRID RAG RETRIEVAL ---
-    const advancedRAG = (query: string, filter?: string) => {
-      const documents = db.getKnowledgeDocuments();
-      if (documents.length === 0) {
-        return { context: 'No knowledge base documents available.', sources: [], confidence: 0.1 };
-      }
-
-      const queryWords = query.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w.length >= 3);
-      
-      const scoredDocs = documents.map(doc => {
-        let score = 0;
-        const docText = (doc.name + ' ' + doc.content + ' ' + doc.category).toLowerCase();
-        
-        queryWords.forEach(word => {
-          if (docText.includes(word)) {
-            score += 1.5;
-            const regex = new RegExp(`\\b${word}\\b`, 'g');
-            const matches = docText.match(regex);
-            if (matches) {
-              score += matches.length * 2.5;
-            }
-          }
-        });
-
-        // Category relevance boost
-        if (filter && doc.category.toLowerCase().includes(filter.toLowerCase())) {
-          score += 4.0;
-        }
-
-        return { doc, score };
-      });
-
-      const matchedDocs = scoredDocs
-        .filter(item => item.score > 0)
-        .sort((a, b) => b.score - a.score);
-
-      if (matchedDocs.length === 0) {
-        return {
-          context: `General company info available:\n${documents[0].content.substring(0, 500)}`,
-          sources: [documents[0].name],
-          confidence: 0.20
-        };
-      }
-
-      const topMatched = matchedDocs.slice(0, 2);
-      const contextText = topMatched.map(m => `[Document: ${m.doc.name} (Category: ${m.doc.category})]\n${m.doc.content}`).join('\n\n');
-      const sourcesList = topMatched.map(m => m.doc.name);
-      
-      const maxScore = Math.max(...topMatched.map(m => m.score));
-      const confidence = Math.min(0.95, 0.35 + maxScore * 0.05);
-
-      return { context: contextText, sources: sourcesList, confidence };
-    };
-
-    const { context, sources, confidence: retrievalConfidence } = advancedRAG(userMessage, categoryFilter);
+    // --- PHASE 4: RELATIONAL VECTOR DATABASE SEMANTIC RAG RETRIEVAL ---
+    const vectorSearchResult = await vectorStore.similaritySearch(userMessage, 3, categoryFilter);
+    const context = vectorSearchResult.context;
+    const sources = vectorSearchResult.sources;
+    const retrievalConfidence = vectorSearchResult.confidence;
 
     // --- PHASE 12: KNOWLEDGE GAP DETECTION ---
     const isQuestionIntent = ['product_inquiry', 'pricing_question', 'general_faq', 'shipping_delivery', 'technical_support'].includes(classification.primaryIntent);

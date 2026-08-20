@@ -5,6 +5,8 @@ import { db } from './src/server/db.js';
 import { geminiService, SwahiliSpeechOptimizer } from './src/server/gemini.js';
 import { supabaseService } from './src/server/supabase.js';
 import { Message, Conversation, SupportTicket, PromptVersion, PromptTest, KnowledgeDocument } from './src/types.js';
+import { vectorStore, RelationalVectorStore } from './src/server/vectorStore.js';
+import { langgraphEngine } from './src/server/langgraphEngine.js';
 
 async function startServer() {
   const app = express();
@@ -716,12 +718,12 @@ async function startServer() {
     res.json(finalTest);
   });
 
-  // --- KNOWLEDGE BASE MANAGEMENT ---
+  // --- KNOWLEDGE BASE & VECTOR DATABASE MANAGEMENT ---
   app.get('/api/documents', (req, res) => {
     res.json(db.getKnowledgeDocuments());
   });
 
-  app.post('/api/documents', (req, res) => {
+  app.post('/api/documents', async (req, res) => {
     const { name, category, content } = req.body;
     if (!name || !category || !content) {
       res.status(400).json({ error: 'All fields are required' });
@@ -739,12 +741,55 @@ async function startServer() {
     };
 
     db.createKnowledgeDocument(newDoc);
+
+    // Asynchronously re-index high-dimensional vector embeddings
+    vectorStore.indexKnowledgeBase().catch(err => console.error('Vector re-indexing error:', err));
+
     res.status(201).json(newDoc);
   });
 
-  app.delete('/api/documents/:id', (req, res) => {
+  app.delete('/api/documents/:id', async (req, res) => {
     db.deleteKnowledgeDocument(req.params.id);
+    vectorStore.indexKnowledgeBase().catch(err => console.error('Vector re-indexing error:', err));
     res.json({ success: true });
+  });
+
+  // Vector Database Schema & Status Endpoint (MySQL 9.0 / PostgreSQL pgvector)
+  app.get('/api/vector-store/schema', async (req, res) => {
+    res.json({
+      status: 'active',
+      embeddingModel: 'Google text-embedding-004 (768 dimensions)',
+      mySqlVectorDdl: RelationalVectorStore.MYSQL_VECTOR_SCHEMA.trim(),
+      pgVectorDdl: RelationalVectorStore.PGVECTOR_SCHEMA.trim(),
+      indexedDocumentsCount: db.getKnowledgeDocuments().length
+    });
+  });
+
+  // Dedicated LangGraph Multi-Agent Workflow Execution Endpoint
+  app.post('/api/langgraph/workflow', async (req, res) => {
+    const { message, conversationHistory, customerMemory, activePrompt } = req.body;
+    if (!message) {
+      res.status(400).json({ error: 'message field is required' });
+      return;
+    }
+
+    try {
+      const graphResult = await langgraphEngine.runWorkflow({
+        userMessage: message,
+        messageHistory: conversationHistory,
+        customerMemory,
+        activePromptContent: activePrompt
+      });
+
+      res.json({
+        success: true,
+        workflow: 'LangGraph StateGraph',
+        state: graphResult
+      });
+    } catch (e: any) {
+      console.error('LangGraph workflow error:', e);
+      res.status(500).json({ error: e.message || 'LangGraph workflow error' });
+    }
   });
 
   // --- LIVE SYSTEM ANALYTICS ---
