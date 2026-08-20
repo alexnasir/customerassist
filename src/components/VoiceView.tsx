@@ -11,7 +11,9 @@ import {
   Play,
   Languages,
   ChevronRight,
-  Compass
+  Compass,
+  Send,
+  MessageSquare
 } from 'lucide-react';
 
 export default function VoiceView() {
@@ -20,6 +22,7 @@ export default function VoiceView() {
   const [selectedVoice, setSelectedVoice] = useState<string>('Kore');
   const [userTranscript, setUserTranscript] = useState<string>('');
   const [aiResponseText, setAiResponseText] = useState<string>('');
+  const [customTextInput, setCustomTextInput] = useState<string>('');
   const [latency, setLatency] = useState<number | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
@@ -412,6 +415,16 @@ export default function VoiceView() {
     await runVoiceAI(prompt.text, prompt.lang);
   };
 
+  const handleTextPromptSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customTextInput.trim() || voiceStatus === 'processing') return;
+    const text = customTextInput.trim();
+    setCustomTextInput('');
+    setUserTranscript(text);
+    setAiResponseText('');
+    await runVoiceAI(text);
+  };
+
   return (
     <div className="flex-1 bg-zinc-950 p-4 sm:p-8 overflow-y-auto flex flex-col md:flex-row gap-6 sm:gap-8 touch-scroll" id="voice-view">
       {/* LEFT: Central Voice Console */}
@@ -476,7 +489,7 @@ export default function VoiceView() {
         </div>
 
         {/* Language & Voice Selector */}
-        <div className="w-full max-w-md mt-6 sm:mt-10 bg-zinc-950 border border-zinc-800 p-4 sm:p-6 rounded-3xl">
+        <div className="w-full max-w-md mt-6 bg-zinc-950 border border-zinc-800 p-4 sm:p-6 rounded-3xl">
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
             <div className="flex-1">
               <label className="block text-[10px] font-mono uppercase tracking-widest text-zinc-500 mb-2">Language</label>
@@ -510,6 +523,27 @@ export default function VoiceView() {
             </div>
           </div>
         </div>
+
+        {/* Text Input for Voice Response Area */}
+        <form onSubmit={handleTextPromptSubmit} className="w-full max-w-md mt-4 flex items-center gap-2 bg-zinc-950 border border-zinc-800 p-2 rounded-2xl">
+          <input
+            type="text"
+            value={customTextInput}
+            onChange={(e) => setCustomTextInput(e.target.value)}
+            placeholder={selectedLanguage === 'sw' ? 'Andika swali hapa (utapata jibu la sauti)...' : 'Type message here (response will be spoken)...'}
+            disabled={voiceStatus === 'processing'}
+            className="flex-1 bg-transparent text-xs sm:text-sm text-zinc-100 placeholder:text-zinc-600 px-3 py-2 outline-none min-h-[40px]"
+          />
+          <button
+            type="submit"
+            disabled={!customTextInput.trim() || voiceStatus === 'processing'}
+            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 text-white rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 shrink-0 min-h-[40px]"
+            title="Send text and hear voice response"
+          >
+            <Send className="w-3.5 h-3.5" />
+            <span></span>
+          </button>
+        </form>
 
         {/* Real hidden audio component */}
         <audio 
@@ -546,7 +580,24 @@ export default function VoiceView() {
 
             {aiResponseText && (
               <div className="bg-zinc-950 border border-zinc-800 p-4 rounded-2xl">
-                <div className="text-emerald-400 text-[10px] font-mono tracking-widest mb-1.5">DUKA LETU AGENT</div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="text-emerald-400 text-[10px] font-mono tracking-widest">DUKA LETU AGENT</div>
+                  {audioUrl && (
+                    <button
+                      onClick={() => {
+                        if (audioRef.current) {
+                          stopAllAudio();
+                          audioRef.current.play().then(() => setVoiceStatus('speaking')).catch(() => setVoiceStatus('idle'));
+                        }
+                      }}
+                      className="text-[10px] text-zinc-400 hover:text-emerald-400 flex items-center gap-1 font-mono transition-colors"
+                      title="Replay Voice"
+                    >
+                      <Volume2 className="w-3 h-3" />
+                      <span>Replay</span>
+                    </button>
+                  )}
+                </div>
                 <p className="text-zinc-200 text-xs sm:text-sm leading-relaxed">{aiResponseText}</p>
               </div>
             )}

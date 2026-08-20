@@ -12,7 +12,9 @@ import {
   ArrowRight,
   RefreshCw,
   Plus,
-  CheckCircle
+  CheckCircle,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import { Conversation, Message } from '../types.js';
 
@@ -22,6 +24,8 @@ export default function ChatView() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [language, setLanguage] = useState<'en' | 'sw' | 'auto'>('auto');
+  const [voiceResponseEnabled, setVoiceResponseEnabled] = useState(false);
+  const [currentlySpeakingMsgId, setCurrentlySpeakingMsgId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [retrievedSources, setRetrievedSources] = useState<string[]>([]);
   
@@ -32,6 +36,7 @@ export default function ChatView() {
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const fetchConversations = async () => {
     try {
@@ -86,6 +91,75 @@ export default function ChatView() {
     }
   };
 
+  const stopAudio = () => {
+    try {
+      if (chatAudioRef.current) {
+        chatAudioRef.current.pause();
+        chatAudioRef.current.src = '';
+      }
+    } catch (e) {}
+    try {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    } catch (e) {}
+    setCurrentlySpeakingMsgId(null);
+  };
+
+  const speakMessage = async (msgId: string, text: string) => {
+    if (currentlySpeakingMsgId === msgId) {
+      stopAudio();
+      return;
+    }
+
+    stopAudio();
+    setCurrentlySpeakingMsgId(msgId);
+
+    try {
+      const synthRes = await fetch('/api/voice/synthesize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text,
+          language: language === 'sw' ? 'sw' : 'en',
+          voiceName: 'Kore'
+        })
+      });
+
+      if (synthRes.ok) {
+        const synthData = await synthRes.json();
+        if (synthData.audioResponse && synthData.audioResponse.length > 100) {
+          const binary = atob(synthData.audioResponse);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+          }
+          const blob = new Blob([bytes], { type: synthData.audioMimeType || 'audio/mpeg' });
+          const url = URL.createObjectURL(blob);
+          if (chatAudioRef.current) {
+            chatAudioRef.current.src = url;
+            chatAudioRef.current.play().catch(() => setCurrentlySpeakingMsgId(null));
+          }
+          return;
+        }
+      }
+
+      // Browser TTS fallback
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = language === 'sw' ? 'sw-KE' : 'en-US';
+        utterance.onend = () => setCurrentlySpeakingMsgId(null);
+        utterance.onerror = () => setCurrentlySpeakingMsgId(null);
+        window.speechSynthesis.speak(utterance);
+      } else {
+        setCurrentlySpeakingMsgId(null);
+      }
+    } catch (e) {
+      console.warn('Speech playback error:', e);
+      setCurrentlySpeakingMsgId(null);
+    }
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim() || !activeConv || loading) return;
@@ -125,6 +199,10 @@ export default function ChatView() {
           const filtered = prev.filter(m => m.id !== tempUserMsg.id);
           return [...filtered, data.userMessage, ...(data.assistantMessage ? [data.assistantMessage] : [])];
         });
+
+        if (data.assistantMessage && voiceResponseEnabled) {
+          speakMessage(data.assistantMessage.id, data.assistantMessage.content);
+        }
 
         if (data.sources) {
           setRetrievedSources(data.sources);
@@ -338,8 +416,19 @@ export default function ChatView() {
                           ? 'bg-purple-950/50 border-purple-900/50 text-white rounded-tl-none'
                           : 'bg-zinc-900 border-zinc-800 text-zinc-100 rounded-tl-none'
                     }`}>
-                      <div className="text-[10px] text-zinc-500 mb-1 font-mono">
-                        {msg.senderName} • {new Date(msg.timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                      <div className="flex items-center justify-between gap-3 text-[10px] text-zinc-500 mb-1 font-mono">
+                        <span>{msg.senderName} • {new Date(msg.timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</span>
+                        {!isUser && (
+                          <button
+                            type="button"
+                            onClick={() => speakMessage(msg.id, msg.content)}
+                            className={`p-1 rounded hover:bg-zinc-800 transition-colors flex items-center gap-1 ${currentlySpeakingMsgId === msg.id ? 'text-emerald-400 font-semibold' : 'text-zinc-400 hover:text-zinc-200'}`}
+                            title={currentlySpeakingMsgId === msg.id ? 'Stop Speaking' : 'Listen to Voice Response'}
+                          >
+                            <Volume2 className={`w-3.5 h-3.5 ${currentlySpeakingMsgId === msg.id ? 'animate-pulse' : ''}`} />
+                            <span className="text-[9px]">{currentlySpeakingMsgId === msg.id ? 'Playing' : 'Listen'}</span>
+                          </button>
+                        )}
                       </div>
                       <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                     </div>
@@ -373,37 +462,75 @@ export default function ChatView() {
             )}
 
             {/* Input field footer */}
-            <form onSubmit={handleSendMessage} className="p-3 sm:p-5 border-t border-zinc-800 bg-zinc-900 flex gap-2 sm:gap-3">
-              <div className="flex items-center bg-zinc-950 border border-zinc-800 rounded-2xl px-2.5 sm:px-4 text-xs shrink-0">
-                <Globe className="w-3.5 h-3.5 text-zinc-400 mr-1.5" />
-                <select 
-                  value={language} 
-                  onChange={(e) => setLanguage(e.target.value as any)}
-                  className="bg-transparent outline-none text-zinc-200 py-2.5 sm:py-3 pr-1 cursor-pointer text-xs"
+            <form onSubmit={handleSendMessage} className="p-3 sm:p-5 border-t border-zinc-800 bg-zinc-900 flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center bg-zinc-950 border border-zinc-800 rounded-2xl px-2.5 sm:px-4 text-xs shrink-0">
+                  <Globe className="w-3.5 h-3.5 text-zinc-400 mr-1.5" />
+                  <select 
+                    value={language} 
+                    onChange={(e) => setLanguage(e.target.value as any)}
+                    className="bg-transparent outline-none text-zinc-200 py-2.5 sm:py-3 pr-1 cursor-pointer text-xs"
+                  >
+                    <option value="auto">Auto</option>
+                    <option value="en">EN</option>
+                    <option value="sw">SW</option>
+                  </select>
+                </div>
+
+                {/* Voice Response Toggle Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (voiceResponseEnabled) {
+                      stopAudio();
+                    }
+                    setVoiceResponseEnabled(!voiceResponseEnabled);
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-2.5 rounded-2xl text-xs font-medium border transition-all shrink-0 min-h-[40px] ${
+                    voiceResponseEnabled
+                      ? 'bg-emerald-950 text-emerald-400 border-emerald-800'
+                      : 'bg-zinc-950 text-zinc-400 border-zinc-800 hover:text-zinc-200 hover:border-zinc-700'
+                  }`}
+                  title={voiceResponseEnabled ? 'Voice Auto-Response Enabled (Responses are spoken aloud)' : 'Enable Voice Response (Responses will be spoken aloud)'}
                 >
-                  <option value="auto">Auto</option>
-                  <option value="en">EN</option>
-                  <option value="sw">SW</option>
-                </select>
+                  {voiceResponseEnabled ? <Volume2 className="w-3.5 h-3.5 text-emerald-400" /> : <VolumeX className="w-3.5 h-3.5 text-zinc-500" />}
+                  <span className="hidden sm:inline">{voiceResponseEnabled ? 'Voice Reply On' : 'Voice Reply Off'}</span>
+                </button>
               </div>
 
-              <input
-                type="text"
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                placeholder={activeConv.status === 'escalated' ? 'AI is paused while escalated...' : 'Ask about shipping, refunds, orders...'}
-                disabled={activeConv.status === 'escalated' || loading}
-                className="flex-1 bg-zinc-950 border border-zinc-800 focus:border-zinc-600 text-zinc-200 px-3.5 sm:px-5 py-2.5 sm:py-3.5 rounded-2xl outline-none text-sm disabled:opacity-50 min-w-0 min-h-[44px]"
-              />
+              <div className="flex-1 flex gap-2">
+                <input
+                  type="text"
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  placeholder={
+                    activeConv.status === 'escalated'
+                      ? 'AI is paused while escalated...'
+                      : voiceResponseEnabled
+                        ? 'Type your message (response will be read aloud)...'
+                        : 'Ask about shipping, refunds, orders...'
+                  }
+                  disabled={activeConv.status === 'escalated' || loading}
+                  className="flex-1 bg-zinc-950 border border-zinc-800 focus:border-zinc-600 text-zinc-200 px-3.5 sm:px-5 py-2.5 sm:py-3.5 rounded-2xl outline-none text-sm disabled:opacity-50 min-w-0 min-h-[44px]"
+                />
 
-              <button
-                type="submit"
-                disabled={!inputText.trim() || activeConv.status === 'escalated' || loading}
-                className="bg-white text-zinc-950 px-4 sm:px-6 rounded-2xl font-medium disabled:opacity-40 hover:bg-zinc-200 transition-all flex items-center justify-center shrink-0 min-h-[44px]"
-              >
-                <Send className="w-4 h-4" />
-              </button>
+                <button
+                  type="submit"
+                  disabled={!inputText.trim() || activeConv.status === 'escalated' || loading}
+                  className="bg-white text-zinc-950 px-4 sm:px-6 rounded-2xl font-medium disabled:opacity-40 hover:bg-zinc-200 transition-all flex items-center justify-center shrink-0 min-h-[44px]"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
             </form>
+
+            {/* Hidden audio element for speech playback */}
+            <audio
+              ref={chatAudioRef}
+              className="hidden"
+              onEnded={() => setCurrentlySpeakingMsgId(null)}
+              onError={() => setCurrentlySpeakingMsgId(null)}
+            />
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-6 sm:p-8">
