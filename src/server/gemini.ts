@@ -423,6 +423,9 @@ Return exactly a JSON object conforming to the schema.`;
 /**
  * Service to interact with Gemini API for Chat, Voice, RAG, and Prompts
  */
+// Resilient TTS Quota Circuit Breaker
+let geminiTtsCooldownUntil = 0;
+
 export const geminiService = {
   /**
    * Generates a conversational response using RAG context and the active system prompt
@@ -1003,39 +1006,47 @@ User message: "${text}"`;
     if (isSwahili) {
       console.log(`[TTS PIPELINE] Entering dedicated Kiswahili speech pipeline for text: "${text.substring(0, 50)}..."`);
       
-      // 1. Primary Provider: Gemini TTS Multilingual
-      try {
-        console.log(`[TTS PIPELINE] Primary Provider: Attempting Gemini Multilingual TTS with voice '${voiceName}'`);
-        const response = await generateContentWithRetry({
-          model: 'gemini-3.1-flash-tts-preview',
-          contents: [{ parts: [{ text: `Say clearly: ${text}` }] }],
-          config: {
-            responseModalities: ['AUDIO'],
-            speechConfig: {
-              voiceConfig: {
-                prebuiltVoiceConfig: { voiceName }
+      // 1. Primary Provider: Gemini TTS Multilingual (if quota is available)
+      const canTryGeminiTts = Date.now() > geminiTtsCooldownUntil;
+      if (canTryGeminiTts) {
+        try {
+          console.log(`[TTS PIPELINE] Primary Provider: Attempting Gemini Multilingual TTS with voice '${voiceName}'`);
+          const response = await generateContentWithRetry({
+            model: 'gemini-3.1-flash-tts-preview',
+            contents: [{ parts: [{ text: `Say clearly: ${text}` }] }],
+            config: {
+              responseModalities: ['AUDIO'],
+              speechConfig: {
+                voiceConfig: {
+                  prebuiltVoiceConfig: { voiceName }
+                }
               }
             }
-          }
-        });
+          });
 
-        const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-        if (base64Audio) {
-          console.log('[TTS PIPELINE] Primary Provider (Gemini Multilingual TTS) succeeded.');
-          return {
-            audioResponse: base64Audio,
-            mimeType: 'audio/wav',
-            provider: 'Gemini Multilingual TTS'
-          };
+          const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+          if (base64Audio) {
+            console.log('[TTS PIPELINE] Primary Provider (Gemini Multilingual TTS) succeeded.');
+            return {
+              audioResponse: base64Audio,
+              mimeType: 'audio/wav',
+              provider: 'Gemini Multilingual TTS'
+            };
+          }
+        } catch (err: any) {
+          const errMsg = err.message || String(err);
+          if (errMsg.includes('429') || errMsg.includes('RESOURCE_EXHAUSTED')) {
+            geminiTtsCooldownUntil = Date.now() + 15 * 60 * 1000; // 15-minute cooldown
+            console.log('[TTS PIPELINE] Gemini TTS quota exhausted. Gracefully routing directly to high-speed Google Swahili Voice Engine.');
+          } else {
+            console.warn(`[TTS PIPELINE] Gemini Multilingual TTS temporary notice: ${errMsg}`);
+          }
         }
-        throw new Error('Empty audio response from Gemini Multilingual TTS API');
-      } catch (err: any) {
-        const errMsg = err.message || String(err);
-        console.warn(`[TTS PIPELINE] Primary Provider (Gemini Multilingual) failed: ${errMsg}`);
-        errors.push(`Primary Provider (Gemini TTS) failed: ${errMsg}`);
+      } else {
+        console.log('[TTS PIPELINE] Direct routing to Google Translate Swahili Voice Engine.');
       }
 
-      // 2. Secondary Provider: Google Translate Swahili TTS Engine
+      // 2. Secondary Provider: Google Translate Swahili TTS Engine (Fast, Unlimited & High-Fidelity)
       try {
         console.log('[TTS PIPELINE] Secondary Provider: Attempting Google Translate Swahili TTS Engine...');
         
@@ -1162,36 +1173,44 @@ User message: "${text}"`;
       }
     } else {
       // English / Non-Swahili response
-      // 1. Primary: Gemini English TTS
-      try {
-        console.log(`[TTS PIPELINE] Primary Provider: Attempting Gemini English TTS with voice '${voiceName}'`);
-        const response = await generateContentWithRetry({
-          model: 'gemini-3.1-flash-tts-preview',
-          contents: [{ parts: [{ text: `Say clearly: ${text}` }] }],
-          config: {
-            responseModalities: ['AUDIO'],
-            speechConfig: {
-              voiceConfig: {
-                prebuiltVoiceConfig: { voiceName }
+      // 1. Primary: Gemini English TTS (if quota is available)
+      const canTryGeminiTts = Date.now() > geminiTtsCooldownUntil;
+      if (canTryGeminiTts) {
+        try {
+          console.log(`[TTS PIPELINE] Primary Provider: Attempting Gemini English TTS with voice '${voiceName}'`);
+          const response = await generateContentWithRetry({
+            model: 'gemini-3.1-flash-tts-preview',
+            contents: [{ parts: [{ text: `Say clearly: ${text}` }] }],
+            config: {
+              responseModalities: ['AUDIO'],
+              speechConfig: {
+                voiceConfig: {
+                  prebuiltVoiceConfig: { voiceName }
+                }
               }
             }
-          }
-        });
+          });
 
-        const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-        if (base64Audio) {
-          console.log('[TTS PIPELINE] Primary Provider (Gemini English TTS) succeeded.');
-          return {
-            audioResponse: base64Audio,
-            mimeType: 'audio/wav',
-            provider: 'Gemini English TTS'
-          };
+          const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+          if (base64Audio) {
+            console.log('[TTS PIPELINE] Primary Provider (Gemini English TTS) succeeded.');
+            return {
+              audioResponse: base64Audio,
+              mimeType: 'audio/wav',
+              provider: 'Gemini English TTS'
+            };
+          }
+        } catch (err: any) {
+          const errMsg = err.message || String(err);
+          if (errMsg.includes('429') || errMsg.includes('RESOURCE_EXHAUSTED')) {
+            geminiTtsCooldownUntil = Date.now() + 15 * 60 * 1000; // 15-minute cooldown
+            console.log('[TTS PIPELINE] Gemini TTS quota exhausted. Gracefully routing directly to high-speed Google English Voice Engine.');
+          } else {
+            console.warn(`[TTS PIPELINE] Gemini English TTS temporary notice: ${errMsg}`);
+          }
         }
-        throw new Error('No audio data received from Gemini TTS API');
-      } catch (err: any) {
-        const errMsg = err.message || String(err);
-        console.warn(`[TTS PIPELINE] Primary Provider (Gemini English) failed: ${errMsg}`);
-        errors.push(`Primary Provider (Gemini English) failed: ${errMsg}`);
+      } else {
+        console.log('[TTS PIPELINE] Direct routing to Google Translate English Voice Engine.');
       }
 
       // 2. Secondary Provider: Google Translate English TTS Engine
@@ -1376,7 +1395,7 @@ Rate the prompt score out of 100 based on:
 Return the score as a JSON object with a single "score" integer field.`;
 
       const response = await generateContentWithRetry({
-        model: 'gemini-3.6-flash',
+        model: 'gemini-3.7-flash',
         contents: evaluationInstruction,
         config: {
           temperature: 0.1,
@@ -1904,7 +1923,7 @@ Input text: "${text}"
 Optimized Kiswahili Speech Text:`;
 
     const response = await generateContentWithRetry({
-      model: 'gemini-3.6-flash',
+      model: 'gemini-3.7-flash',
       contents: prompt,
       config: {
         temperature: 0.2
