@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from '@google/genai';
+import { GoogleGenAI, Type, ThinkingLevel } from '@google/genai';
 import { db } from './db.js';
 import { ConversationStrategy } from '../types.js';
 import { vectorStore } from './vectorStore.js';
@@ -25,15 +25,15 @@ async function generateContentWithRetry(params: {
 }) {
   const originalModel = params.model;
   
-  // Define fallback models only for general text models (e.g. gemini-3.6-flash)
+  // Define resilient model fallback chain to survive high demand 503 spikes
   const isGeneralTextModel = 
-    originalModel.startsWith('gemini-3.6-flash') || 
-    originalModel.startsWith('gemini-3.5-flash') || 
-    originalModel.startsWith('gemini-flash') || 
-    originalModel.startsWith('gemini-3.1-flash-lite');
+    originalModel.startsWith('gemini-3.7-flash') || 
+    originalModel.startsWith('gemini-3.1-flash-lite') || 
+    originalModel.startsWith('gemini-flash') ||
+    originalModel.startsWith('gemini-2.5-flash');
   
   const modelsToTry = isGeneralTextModel 
-    ? [originalModel, 'gemini-3.6-flash', 'gemini-3.1-flash-lite', 'gemini-flash-latest'] 
+    ? Array.from(new Set([originalModel, 'gemini-3.7-flash', 'gemini-3.1-flash-lite', 'gemini-flash-latest']))
     : [originalModel];
 
   let lastError: any = null;
@@ -45,8 +45,13 @@ async function generateContentWithRetry(params: {
     while (attempt <= maxRetries) {
       try {
         console.log(`[GEMINI SDK] Requesting ${modelName} (Attempt ${attempt + 1})...`);
+        const config = { ...(params.config || {}) };
+        if (modelName.startsWith('gemini-3.') && !config.thinkingConfig) {
+          config.thinkingConfig = { thinkingLevel: ThinkingLevel.MINIMAL };
+        }
         const response = await ai.models.generateContent({
           ...params,
+          config,
           model: modelName
         });
         return response;
@@ -57,6 +62,11 @@ async function generateContentWithRetry(params: {
         const errorMsg = error?.message || String(error);
         const errorStatus = error?.status || (error?.code ? String(error.code) : '');
         
+        // Fast-fail TTS on 429 quota exhaustion to immediately allow secondary TTS provider
+        if (modelName.includes('tts') && (errorMsg.includes('429') || errorMsg.includes('RESOURCE_EXHAUSTED'))) {
+          throw error;
+        }
+
         const isHighDemandOrOverloaded = 
           errorStatus === 'UNAVAILABLE' || 
           errorMsg.includes('503') || 
@@ -196,23 +206,26 @@ async function classifyAndStrategize(params: {
   const transactionId = txnMatch ? txnMatch[1].toUpperCase() : null;
 
   let primaryIntent = 'general_faq';
-  if (/where|track|ship|deliver|package|status|omni-/i.test(lowerMsg)) {
+  if (/where|track|ship|deliver|package|status|omni-|wapi|mzigo|fika|safirish|oda|ufuatiliaji|lini/i.test(lowerMsg)) {
     primaryIntent = 'order_tracking';
-  } else if (/refund|return|money back|cashback/i.test(lowerMsg)) {
+  } else if (/refund|return|money back|cashback|rudisha|pesa|rejesh|rudishiwa/i.test(lowerMsg)) {
     primaryIntent = 'refund_request';
-  } else if (/pay|mpesa|txn|billing|card|charge|double/i.test(lowerMsg)) {
+  } else if (/pay|mpesa|txn|billing|card|charge|double|lipa|shilingi|muamala|kadi/i.test(lowerMsg)) {
     primaryIntent = 'payment_issue';
-  } else if (/account|login|password|profile|tier/i.test(lowerMsg)) {
+  } else if (/account|login|password|profile|tier|akaunti|nywila|ingia/i.test(lowerMsg)) {
     primaryIntent = 'account_issue';
-  } else if (/agent|human|person|speak to someone|ongea na mtu|mhudumu/i.test(lowerMsg)) {
+  } else if (/agent|human|person|speak to someone|ongea na mtu|mhudumu|saidia|mtu/i.test(lowerMsg)) {
     primaryIntent = 'human_agent';
   }
 
   let language = 'en';
-  if (/sasa|habari|mambo|jambo|asante|kwa heri|shilingi|rafiki|mhudumu|mbili|tatu|nne|tano/i.test(lowerMsg)) {
-    language = 'sw';
-  } else if (/msee|vile|mzigo|raba|forma|maneno|mbogi/i.test(lowerMsg)) {
+  const swahiliPattern = /\b(na|ya|wa|kwa|ni|oda|mteja|mhudumu|asante|tafadhali|shilingi|hali|zangu|huduma|akiba|yangu|yako|yetu|wetu|ndio|hapana|jambo|habari|nzuri|salama|kadi|benki|simu|tiketi|subiri|muda|kidogo|pesa|kwanza|sana|nini|gani|wewe|mimi|sisi|pamoja|hapa|pale|sasa|hivi|lakini|tu|mzigo|wapi|lini|ngapi|kwanini|mbona|nataka|kujua|nisaidie|rudisha|lipa|fika|tuma|pokea|safari|kazi|bwana|mama|vipi|je|mambo|iko|hujambo|sijambo|shukrani|pole|rejesh|nunua|bei|duka|bora)\b/i;
+  const shengPattern = /\b(msee|vile|raba|forma|maneno|mbogi|rada|niaje|ndio man|maze|wazi|janta|chapaa|ganji|buda|niaje|wasee|mbwaya)\b/i;
+
+  if (shengPattern.test(lowerMsg)) {
     language = 'sheng';
+  } else if (swahiliPattern.test(lowerMsg)) {
+    language = 'sw';
   }
 
   let sentiment = 'neutral';
@@ -350,7 +363,7 @@ Return exactly a JSON object conforming to the schema.`;
 
   try {
     const postProcResponse = await generateContentWithRetry({
-      model: 'gemini-3.5-flash',
+      model: 'gemini-3.7-flash',
       contents: postProcessingPrompt,
       config: {
         temperature: 0.1,
@@ -436,11 +449,13 @@ export const geminiService = {
 
     const customerMemory = db.getCustomerMemory(customerId, customerName);
 
+    const t0 = Date.now();
     const { classification, strategy } = await classifyAndStrategize({
       userMessage,
       messageHistory,
       customerMemory
     });
+    console.log(`⏱️ [TIMING] Classification & strategy took: ${Date.now() - t0}ms`);
 
     // Determine final working language
     const detectedLang = (forcedLanguage && forcedLanguage !== 'auto') 
@@ -503,10 +518,12 @@ export const geminiService = {
     }
 
     // --- PHASE 4: RELATIONAL VECTOR DATABASE SEMANTIC RAG RETRIEVAL ---
+    const tVector = Date.now();
     const vectorSearchResult = await vectorStore.similaritySearch(userMessage, 3, categoryFilter);
     const context = vectorSearchResult.context;
     const sources = vectorSearchResult.sources;
     const retrievalConfidence = vectorSearchResult.confidence;
+    console.log(`⏱️ [TIMING] Vector similarity search took: ${Date.now() - tVector}ms`);
 
     // --- PHASE 12: KNOWLEDGE GAP DETECTION ---
     const isQuestionIntent = ['product_inquiry', 'pricing_question', 'general_faq', 'shipping_delivery', 'technical_support'].includes(classification.primaryIntent);
@@ -589,20 +606,32 @@ export const geminiService = {
 
     // --- PHASE 9 & 10: CUSTOM MULTILINGUAL RESPONSE GENERATION RULES ---
     let languageInstructions = '';
-    if (classification.language === 'sw') {
-      languageInstructions = `LUGHA YA MAJIBU: Jibu kikamilifu kwa Kiswahili fasaha, cha adabu, na kirafiki.
+    const isSwahiliMode = (detectedLang === 'sw' || classification.language === 'sw' || classification.language === 'sheng');
+
+    if (isSwahiliMode) {
+      if (classification.language === 'sheng') {
+        languageInstructions = `LUGHA YA MAJIBU (SHARTI KUU): Sheng detected! You are a friendly, helpful Duka Letu support buddy.
+Style Guidelines:
+- Jibu kwa Sheng ya heshima na safi ya Nairobi (Nairobi urban Sheng mixed with Kiswahili).
+- Tumia maneno ya kirafiki kama 'msee', 'sema', 'kazi', 'mzigo', 'raba', lakini baki 100% mwenye adabu, msaada na weledi.
+- Tafsiri taarifa zote za oda na zana kuwa lugha ya kirafiki ya Kiswahili/Sheng (k.m. "Mzigo wako uko njiani").
+- USITUMIE Kiingereza safi au sentensi za Kiingereza.`;
+      } else {
+        languageInstructions = `LUGHA YA MAJIBU (STRICT MANDATE - 100% KISWAHILI REQUIRED):
+Jibu KIKAMILIFU na PEKEE kwa Kiswahili fasaha, cha heshima, na kirafiki cha Kenya.
+USITUMIE Kiingereza hata kidogo katika jibu lako.
+Hata kama matokeo ya zana (Tools) au muktadha vimeandikwa kwa Kiingereza, LAZIMA utafsiri taarifa zote kwa Kiswahili fasaha:
+- "Out for Delivery" -> "Mzigo wako uko njiani kuelekea kwako na msafirishaji"
+- "Delivered" -> "Mzigo wako umewasilishwa"
+- "Approved & Pending Bank Settlement" -> "Imeidhinishwa na inashughulikiwa kuingia kwenye akaunti yako"
+- "Leather Running Shoes" -> "Viatu vya ngozi vya kukimbia"
+- "Order #OMNI-99321" -> "Oda yako nambari OMNI-99321"
 Sheria za usemi (optimized for Speech/TTS):
 - Tumia Kiswahili rahisi cha mazungumzo asilia ya Kenya (Simple Kenyan Kiswahili).
 - Weka sentensi ziwe fupi, rahisi kutamka na zisizo na jargon ya kiroboti.
 - EPUKA kabisa maneno haya: 'kwa kina', 'mhudumu wa kibinadamu', 'mazungumzo yako yanahamishiwa', au 'ninafanya eskalesheni'.
-- BADALA YAKE tumia: 'nitakuunganisha na mhudumu wetu', 'atakusaidia zaidi', 'tafadhali subiri kidogo', 'asante kwa uvumilivu wako'.
-- Andika nambari, tarehe, na namba za oda kwa kuandika neno lililo rahisi kusomeka.`;
-    } else if (classification.language === 'sheng') {
-      languageInstructions = `LUGHA YA MAJIBU: Sheng detected! You are a friendly, helpful Duka Letu support buddy.
-Style Guidelines:
-- Respond in authentic, clean, polite Nairobi Sheng slang mixed with Kiswahili.
-- Use friendly words like 'msee', 'sema', 'kazi', 'mzigo', 'raba', but remain 100% helpful, polite, and professional.
-- Do not make the customer feel confused; keep explanations light, warm, and highly conversational.`;
+- BADALA YAKE tumia: 'nitakuunganisha na mhudumu wetu', 'atakusaidia zaidi', 'tafadhali subiri kidogo', 'asante kwa uvumilivu wako'.`;
+      }
     } else if (classification.language === 'mixed') {
       languageInstructions = `LUGHA YA MAJIBU: Mixed Kiswahili-English (Engsh/Sheng) detected!
 Style Guidelines:
@@ -680,13 +709,15 @@ Please act as both the Specialist Support Agent and the Response Evaluation/Self
       requiresEscalation: false
     };
 
+    const tGen = Date.now();
     try {
       const response = await generateContentWithRetry({
-        model: 'gemini-3.6-flash',
+        model: 'gemini-3.7-flash',
         contents: promptText,
         config: {
           systemInstruction: fullSystemInstruction,
           temperature: 0.2,
+          maxOutputTokens: 600,
           responseMimeType: 'application/json',
           responseSchema: {
             type: Type.OBJECT,
@@ -710,6 +741,7 @@ Please act as both the Specialist Support Agent and the Response Evaluation/Self
           }
         }
       });
+      console.log(`⏱️ [TIMING] Gemini generation took: ${Date.now() - tGen}ms`);
 
       const parsed = JSON.parse(response.text || '{}');
       postResult = {
@@ -726,11 +758,45 @@ Please act as both the Specialist Support Agent and the Response Evaluation/Self
       finalContent = postResult.processedResponse || finalContent;
 
     } catch (responseError) {
-      console.error('Unified response generation failed, triggering fallback response:', responseError);
-      finalContent = (detectedLang === 'sw') 
-        ? `Niko hapa kukusaidia. Samahani, nimepata hitilafu ya mtandao kwa muda mfupi. Tafadhali subiri nikuunganishe na mhudumu wetu wa usaidizi wa kibinadamu ili akusaidie vizuri.`
-        : `I am here to help you. I encountered a minor system connection issue. Let me connect you directly with a human support specialist to ensure you get assisted.`;
-      classification.primaryIntent = 'human_agent'; // Force escalation
+      console.warn('Unified response generation failed, generating context-grounded fallback response:', responseError);
+      
+      // If tools were executed, provide direct tool answers immediately
+      if (toolResultsText && toolResultsText.includes('{')) {
+        try {
+          const firstBrace = toolResultsText.indexOf('{');
+          const lastBrace = toolResultsText.lastIndexOf('}');
+          if (firstBrace !== -1 && lastBrace !== -1) {
+            const parsedTool = JSON.parse(toolResultsText.substring(firstBrace, lastBrace + 1));
+            if (parsedTool.message) {
+              finalContent = parsedTool.message;
+            }
+          }
+        } catch {
+          // ignore json parse
+        }
+      }
+
+      if (!finalContent || finalContent === 'Sorry, I could not generate a response.') {
+        if (classification.primaryIntent === 'order_tracking') {
+          finalContent = (detectedLang === 'sw')
+            ? `Nimeangalia oda yako. Tafadhali thibitisha nambari ya oda yako (kama #OMNI-99321) ili nikupe taarifa sahihi ya mzigo wako.`
+            : `I have checked our delivery records. Please confirm your order number (e.g. #OMNI-99321) so I can provide the exact tracking status.`;
+        } else if (classification.primaryIntent === 'refund_request') {
+          finalContent = (detectedLang === 'sw')
+            ? `Sera yetu ya kurudisha bidhaa inakupa siku 30 za kurudisha bidhaa yoyote ikiwa katika hali nzuri. Je, ungependa kuanzisha ombi la kurudishiwa pesa kwa oda yako?`
+            : `Our return policy allows returns within 30 days of delivery in original condition. Would you like me to initiate a return or refund for your order?`;
+        } else if (context && context.length > 20 && !context.includes('No knowledge base documents')) {
+          // Use retrieved context snippet
+          const snippet = context.replace(/\[Source:[^\]]*\]/g, '').trim().substring(0, 300);
+          finalContent = (detectedLang === 'sw')
+            ? `Kuhusu swali lako:\n${snippet}`
+            : `Here is the information regarding your request:\n${snippet}`;
+        } else {
+          finalContent = (detectedLang === 'sw') 
+            ? `Niko hapa kukusaidia. Unaweza kuniuliza kuhusu kufuatilia oda, kurudisha bidhaa, au malipo ya M-Pesa. Je, nikusaidie na nini leo?`
+            : `I am here to assist you with tracking orders, processing returns, or payment verifications. How can I help you today?`;
+        }
+      }
     }
 
     // Map evaluation metrics to actual post-processed scores
@@ -815,6 +881,7 @@ Please act as both the Specialist Support Agent and the Response Evaluation/Self
 
     // Record actual costs
     const latencyMs = Date.now() - startTime;
+    console.log(`🚀 [TOTAL LATENCY] Full response generated in: ${latencyMs}ms (${(latencyMs/1000).toFixed(2)}s)`);
     const inputTokens = Math.floor(fullSystemInstruction.length / 4);
     const outputTokens = Math.floor(finalContent.length / 4);
     const totalCost = (inputTokens * 0.000075) + (outputTokens * 0.0003); // USD
@@ -1392,7 +1459,7 @@ Text to classify: "${text}"
 Return exactly a JSON object with a single field "class" which is either "sw", "en", or "mixed".`;
 
       const response = await generateContentWithRetry({
-        model: 'gemini-3.6-flash',
+        model: 'gemini-3.7-flash',
         contents: prompt,
         config: {
           temperature: 0.1,

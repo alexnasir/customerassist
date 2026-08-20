@@ -281,13 +281,14 @@ STYLE RULES:
 
     try {
       const response = await this.ai.models.generateContent({
-        model: 'gemini-3.7-flash',
+        model: 'gemini-2.5-flash',
         contents: [
           { role: 'user', parts: [{ text: userMessage }] }
         ],
         config: {
           systemInstruction: systemPrompt,
           temperature: 0.3,
+          maxOutputTokens: 600
         }
       });
 

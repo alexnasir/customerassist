@@ -29,10 +29,53 @@ export class RelationalVectorStore {
   private chunks: VectorDocumentChunk[] = [];
   private ai: GoogleGenAI | null = null;
   private isInitialized = false;
+  private embeddingCache = new Map<string, number[]>();
 
   constructor() {
     if (process.env.GEMINI_API_KEY) {
       this.ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    }
+    // Pre-index knowledge base immediately on startup so no runtime query ever waits
+    this.indexKnowledgeBaseSync();
+  }
+
+  /**
+   * Fast synchronous initial knowledge indexing
+   */
+  public indexKnowledgeBaseSync(): number {
+    try {
+      const docs = db.getKnowledgeDocuments();
+      const newChunks: VectorDocumentChunk[] = [];
+
+      for (const doc of docs) {
+        const textChunks = this.chunkText(doc.content, 450, 60);
+        for (let i = 0; i < textChunks.length; i++) {
+          const chunkContent = textChunks[i];
+          const chunkText = `${doc.name} - ${doc.category}: ${chunkContent}`;
+          const embedding = this.generateFallbackEmbedding(chunkText, 768);
+          this.embeddingCache.set(chunkText.trim().replace(/\n+/g, ' ').substring(0, 1000), embedding);
+          newChunks.push({
+            id: `vec-${doc.id}-${i}`,
+            documentId: doc.id,
+            documentName: doc.name,
+            category: doc.category,
+            content: chunkContent,
+            embedding,
+            chunkIndex: i,
+            metadata: {
+              category: doc.category,
+              totalChunks: textChunks.length,
+              createdAt: doc.createdAt
+            }
+          });
+        }
+      }
+
+      this.chunks = newChunks;
+      this.isInitialized = true;
+      return this.chunks.length;
+    } catch {
+      return 0;
     }
   }
 
@@ -94,23 +137,34 @@ export class RelationalVectorStore {
       return new Array(768).fill(0);
     }
 
+    if (this.embeddingCache.has(cleanText)) {
+      return this.embeddingCache.get(cleanText)!;
+    }
+
     try {
       if (this.ai && process.env.GEMINI_API_KEY) {
-        const result: any = await this.ai.models.embedContent({
+        // Fast timeout race so vector retrieval never delays chat response
+        const embedPromise = this.ai.models.embedContent({
           model: 'gemini-embedding-2-preview',
           contents: cleanText,
         });
+
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 600));
+        const result: any = await Promise.race([embedPromise, timeoutPromise]);
+        
         const embeddingValues = result.embedding?.values || (result.embeddings && result.embeddings[0]?.values);
         if (embeddingValues && embeddingValues.length > 0) {
+          this.embeddingCache.set(cleanText, embeddingValues);
           return embeddingValues;
         }
       }
     } catch (err) {
-      // Fallback to deterministic semantic vector generator if API is constrained
-      console.warn('Google Embeddings API notice, utilizing local deterministic embedding fallback:', err);
+      // Fallback to deterministic semantic vector generator if API is constrained or timed out
     }
 
-    return this.generateFallbackEmbedding(cleanText, 768);
+    const fallbackVec = this.generateFallbackEmbedding(cleanText, 768);
+    this.embeddingCache.set(cleanText, fallbackVec);
+    return fallbackVec;
   }
 
   /**
