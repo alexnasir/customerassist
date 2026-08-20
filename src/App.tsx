@@ -50,7 +50,9 @@ export default function App() {
         setCurrentUser(data.user);
         
         // Auto route to appropriate view based on role
-        if (data.user.role === 'customer') {
+        if (data.user.role === 'admin') {
+          setActiveTab('voice');
+        } else if (data.user.role === 'customer') {
           setActiveTab('chat');
         } else if (data.user.role === 'visitor') {
           setActiveTab('storefront');
